@@ -104,7 +104,7 @@ The behaviour SHALL be delivered as a rule class in this artifact and SHALL NOT 
 configuring PMD's `CommentDefaultAccessModifier`, whose `regex` and `ignoredAnnotations` properties
 could approximate it.
 
-`rule-distribution` requires that shipped resources reference no external ruleset, so a stock rule
+`pmd-rule-distribution` requires that shipped resources reference no external ruleset, so a stock rule
 with property overrides cannot be included in `rulesets/java/joke.xml`. It would instead be copied
 configuration in every consumer's own ruleset, and would have to restate that rule's full
 `ignoredAnnotations` default list, because PMD multi-value properties replace the default rather

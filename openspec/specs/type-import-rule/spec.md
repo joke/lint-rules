@@ -40,7 +40,7 @@ declaration. Those are where a qualified name belongs.
 - **THEN** the rule reports no violation
 
 #### Scenario: A package declaration is not reported
-- **WHEN** a file contains `package io.github.joke.pmd.rules.java;`
+- **WHEN** a file contains `package io.github.joke.lint.pmd.rules.java;`
 - **THEN** the rule reports no violation
 
 ### Requirement: The rule splits cleanly with PMD's UnnecessaryFullyQualifiedName

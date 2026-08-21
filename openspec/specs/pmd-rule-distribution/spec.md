@@ -1,10 +1,12 @@
-# rule-distribution Specification
+# pmd-rule-distribution Specification
 
 ## Purpose
 
-How the rules are packaged and consumed: rules implemented in Java, PMD as a compile-only dependency
-at the supported floor, a dependency-free published POM, the `category` / `rulesets` resource split,
-the two support windows the shipped resources carry, and the documented consumer wiring.
+How the PMD rules are packaged and consumed: rule classes implemented in Java under
+`io.github.joke.lint.pmd.rules.java`, PMD as a compile-only dependency at the supported floor, a
+dependency-free published POM, the `category` / `rulesets` resource split, the two support windows
+the shipped resources carry, the JUnit and XML-fixture test model, and the documented consumer
+wiring.
 
 ## Requirements
 
@@ -14,18 +16,27 @@ an inline `net.sourceforge.pmd.lang.rule.xpath.XPathRule` expression in the ship
 because such a rule is exempt from every quality gate the build applies — Error Prone, NullAway,
 Spotless and Pitest all require compiled Java.
 
+Rule classes SHALL live under `io.github.joke.lint.pmd.rules.java`, so that the package matches the
+publishing group and is symmetric with the CodeNarc module's `io.github.joke.lint.codenarc.rules.spock`.
+
 #### Scenario: The category file declares only Java-backed rules
 - **WHEN** `category/java/joke.xml` is inspected
 - **THEN** every `<rule>` element carries a `class` attribute naming a class in this artifact
 - **AND** no `<rule>` element declares an `xpath` property
+
+#### Scenario: Rule classes carry the aligned package
+- **WHEN** a rule class is inspected
+- **THEN** its package is `io.github.joke.lint.pmd.rules.java`
+- **AND** `category/java/joke.xml` names it with that package
 
 #### Scenario: Rule classes are subject to the quality gates
 - **WHEN** `./gradlew check` runs
 - **THEN** Spotless, Error Prone, NullAway and Pitest all analyse the rule classes
 
 ### Requirement: PMD is a compile-only dependency at the supported floor
-The `rules` module SHALL declare `net.sourceforge.pmd:pmd-core` and `net.sourceforge.pmd:pmd-java`
-as `compileOnly` at version **7.0.0**, which is the lowest supported PMD version.
+The `pmd-rules` module SHALL declare `net.sourceforge.pmd:pmd-core` and
+`net.sourceforge.pmd:pmd-java` as `compileOnly` at version **7.0.0**, which is the lowest supported
+PMD version.
 
 Compiling against the floor rather than the newest available PMD is deliberate: rules compiled
 against an older API run on newer PMD, whereas rules compiled against a newer API fail with
@@ -35,7 +46,7 @@ recorded in a change, not a side effect of a dependency update.
 Rules SHALL NOT use PMD API annotated `@InternalApi`.
 
 #### Scenario: PMD is compile-only at 7.0.0
-- **WHEN** `rules/build.gradle` and the `dependencies` platform are inspected
+- **WHEN** `pmd-rules/build.gradle` and the `dependencies` platform are inspected
 - **THEN** `pmd-core` and `pmd-java` are declared `compileOnly` and constrained to 7.0.0
 
 #### Scenario: No internal API is used
@@ -48,9 +59,9 @@ project supplies PMD at a version it chooses, via Gradle's `pmd` configuration, 
 SHALL NOT impose one transitively.
 
 This SHALL be secured by configuration choice rather than by a verification task. Every dependency
-the `rules` module declares SHALL sit on a configuration that structurally cannot reach the POM —
+the `pmd-rules` module declares SHALL sit on a configuration that structurally cannot reach the POM —
 `compileOnly`, `annotationProcessor`, `testImplementation`, `testCompileOnly` or `testRuntimeOnly`.
-No `implementation`, `api` or `runtimeOnly` declaration SHALL be added to the `rules` module.
+No `implementation`, `api` or `runtimeOnly` declaration SHALL be added to the `pmd-rules` module.
 
 The previous `verifyPomHasNoDependencies` task, which parsed the generated POM and failed `check` on
 any declared dependency, SHALL NOT be reinstated. The property it defended is stated here; a
@@ -62,7 +73,7 @@ any declared dependency, SHALL NOT be reinstated. The property it defended is st
 - **AND** neither `pmd-core` nor `pmd-java` appears in it
 
 #### Scenario: Every declaration is on a non-publishing configuration
-- **WHEN** the `dependencies` block of `rules/build.gradle` is inspected
+- **WHEN** the `dependencies` block of `pmd-rules/build.gradle` is inspected
 - **THEN** every declaration is `compileOnly`, `annotationProcessor`, `pmd`, `testImplementation`,
   `testCompileOnly` or `testRuntimeOnly`
 - **AND** none is `implementation`, `api` or `runtimeOnly`
@@ -72,7 +83,7 @@ any declared dependency, SHALL NOT be reinstated. The property it defended is st
 - **THEN** the published POM still declares no dependency
 
 #### Scenario: No verification task guards this
-- **WHEN** the `rules` module's tasks are inspected
+- **WHEN** the `pmd-rules` module's tasks are inspected
 - **THEN** no task parses the generated POM
 - **AND** `check` depends on no such task
 
@@ -90,6 +101,9 @@ The artifact SHALL ship exactly three rule resources:
 The name `joke-strict.xml` SHALL be used rather than a name suggesting a superset of this artifact's
 own rules, because the file enables six PMD stock categories and a consumer reading the reference
 needs the blast radius to be visible in the name.
+
+These resource paths SHALL NOT change when the artifact's coordinates change, so that a consumer
+moving to the new coordinates edits their dependency declaration and nothing else.
 
 #### Scenario: All three resources are published
 - **WHEN** the published jar is inspected
@@ -109,6 +123,11 @@ needs the blast radius to be visible in the name.
 - **WHEN** `rulesets/java/joke-strict.xml` is loaded
 - **THEN** the resulting rule set contains every rule declared in `category/java/joke.xml`
 - **AND** it contains rules this artifact does not define
+
+#### Scenario: The coordinate move leaves resource paths untouched
+- **WHEN** the artifact published at `io.github.joke.lint:pmd-rules` is compared with the one
+  previously published at `io.github.joke.pmd:rules`
+- **THEN** all three resource paths are unchanged
 
 ### Requirement: Shipped resources reference no external ruleset
 `category/java/joke.xml` and `rulesets/java/joke.xml` SHALL NOT reference PMD's stock categories,
@@ -265,13 +284,16 @@ means raising that coordinate and running `check`.
 - **WHEN** `README.md` is inspected
 - **THEN** it mentions no cross-version matrix, `additionalPmdVersions` or `strictRulesetVersions`
 - **AND** it states that adopting a newer PMD means raising the `pmd-dist` coordinate
+
 ### Requirement: Consumer wiring is documented
-The `README.md` SHALL document consumption as adding the artifact to the Gradle `pmd` configuration
-and referencing the ruleset, and SHALL state the supported PMD version range.
+`README.md` SHALL document consumption as adding the artifact to the Gradle `pmd` configuration and
+referencing the ruleset, and SHALL state the supported PMD version range.
+
+The wiring SHALL name the artifact at its current coordinates, `io.github.joke.lint:pmd-rules`.
 
 #### Scenario: README shows the two-line wiring
 - **WHEN** `README.md` is inspected
-- **THEN** it shows the artifact added to the `pmd` configuration
+- **THEN** it shows `io.github.joke.lint:pmd-rules` added to the `pmd` configuration
 - **AND** it shows `rulesets/java/joke.xml` referenced from the `pmd` extension
 
 #### Scenario: README states the supported range
@@ -280,7 +302,7 @@ and referencing the ruleset, and SHALL state the supported PMD version range.
 
 ### Requirement: Rule test fixtures stay in XML
 The deliberate rule violations that make up a rule's test data SHALL live inside the `pmd-test` XML
-descriptors under `rules/src/test/resources`, and SHALL NOT be moved into `.java` files.
+descriptors under `pmd-rules/src/test/resources`, and SHALL NOT be moved into `.java` files.
 
 Some PMD projects keep rule test data in real source files under a `testdata` package. Doing that
 here would make the build flag its own fixtures, because the module that builds the rules also
@@ -296,3 +318,20 @@ than left to be rediscovered.
 - **WHEN** a rule's test data is inspected
 - **THEN** every violating and compliant sample is embedded in a `pmd-test` XML descriptor
 - **AND** no `.java` file exists whose purpose is to carry a deliberate violation
+
+### Requirement: The PMD rules are tested with JUnit, not Spock
+The `pmd-rules` module SHALL NOT apply the `groovy` plugin and SHALL NOT declare Spock. Its tests
+SHALL remain JUnit 5 tests in Java, driving `pmd-test`'s `RuleTst` against the XML descriptors.
+
+Spock is readmitted to this repository only in `codenarc-rules`, where it is the corpus the CodeNarc
+rules analyse. Bringing it here would forfeit the `pmd-test` harness, which is the mechanism the XML
+fixture requirement depends on, and would buy no dogfooding: PMD does not analyse Groovy.
+
+#### Scenario: The PMD module stays on JUnit
+- **WHEN** `pmd-rules/build.gradle` is inspected
+- **THEN** it does not apply the `groovy` plugin
+- **AND** it declares no Spock dependency
+
+#### Scenario: No CodeNarc task exists for the PMD module
+- **WHEN** `./gradlew check` runs
+- **THEN** no `CodeNarc` task executes for `:pmd-rules`

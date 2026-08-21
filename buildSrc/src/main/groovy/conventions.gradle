@@ -69,18 +69,6 @@ pluginManager.withPlugin('java') {
 pluginManager.withPlugin('groovy') {
     pluginManager.apply 'codenarc'
     codenarc {
-        // Gradle offers no classpath option for a CodeNarc ruleset: CodeNarcInvoker passes the
-        // ruleset to the Ant task as "file:" + config, so a bare classpath path is impossible.
-        // CodeNarc's own RuleSetUtil does resolve nested ruleset() references from the classpath,
-        // so this stub is the whole indirection - the composition lives in the jar on the codenarc
-        // configuration, and no repository-relative path appears here.
-        //
-        // The nesting is required: RuleSetBuilder exposes only ruleset(Closure) at the top level,
-        // and ruleset(String) is a method on the closure's delegate.
-        //
-        // A text resource from a string materialises without an .xml or .json extension, and
-        // RuleSetUtil falls through to GroovyDslRuleSet for exactly that case, which is the dialect
-        // this stub is written in.
         config = resources.text.fromString("ruleset { ruleset('rulesets/groovy/joke-strict.groovy') }")
         maxPriority1Violations = 0
         maxPriority2Violations = 0
@@ -217,9 +205,6 @@ pluginManager.withPlugin('signing') {
         useGpgCmd()
     }
     pluginManager.withPlugin('maven-publish') {
-        // Every publication, not just `maven`. A module may add another - a relocation POM at a
-        // retired coordinate, say - and an unsigned artifact is rejected by the Central Portal at
-        // the one moment it cannot be withdrawn.
         publishing.publications.configureEach { signing.sign(it) }
     }
 }

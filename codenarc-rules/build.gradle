@@ -16,8 +16,6 @@ dependencies {
     pmd project(':pmd-rules')
 
     compileOnly platform(project(':dependencies'))
-    // CodeNarc's POM puts Groovy at runtime scope, so the Groovy AST this rule code visits is not
-    // on the compile classpath without declaring Groovy here as well.
     compileOnly 'org.apache.groovy:groovy'
     compileOnly 'org.codenarc:CodeNarc'
     compileOnly 'org.jetbrains:annotations'

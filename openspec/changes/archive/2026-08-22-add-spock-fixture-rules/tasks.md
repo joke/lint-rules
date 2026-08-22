@@ -125,5 +125,5 @@ No behaviour change in this group. `./gradlew check` must be green at the end of
 - [x] 8.2 Confirm the published jar contains `rulesets/groovy/joke.groovy` resolving four rules
 - [x] 8.3 Confirm the published POM still declares no dependencies
 - [x] 8.4 Run `./gradlew clean check` and confirm it is green. NEVER continue if there are violations
-- [ ] 8.5 Commit the completed change with `/commit-commands:commit`. The commit must touch
+- [x] 8.5 Commit the completed change with `/commit-commands:commit`. The commit must touch
       `codenarc-rules/` or release-please routes it to no package and cuts no release

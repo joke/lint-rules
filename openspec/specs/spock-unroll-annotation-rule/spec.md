@@ -6,9 +6,7 @@ The `AvoidUnrollAnnotation` rule: what it reports on a specification class and o
 why it matches the annotation by name rather than resolving it, the configurable name and priority
 CodeNarc's rule contract requires, and the visitor shape the repository's own mutation threshold
 imposes.
-
 ## Requirements
-
 ### Requirement: AvoidUnrollAnnotation reports @Unroll on a specification or a feature method
 The artifact SHALL provide a CodeNarc rule named `AvoidUnrollAnnotation` that reports the
 `@Unroll` annotation wherever it is declared — on a specification class or on a feature method.
@@ -66,11 +64,16 @@ The rule SHALL expose `name` and `priority` as read-write properties, defaulting
 `AvoidUnrollAnnotation` and priority 2, because CodeNarc configures a rule by setting them from the
 ruleset that declares it.
 
-The class SHALL suppress PMD's `DataClass` rule with a comment recording why: CodeNarc's
-`AbstractRule` declares both properties abstract, so four of the class's methods are accessors it
-cannot decline to have, and every rule class this artifact ships will carry the same four. The
-suppression SHALL be per class rather than an exclusion in `rulesets/java/joke-strict.xml`, because
-that ruleset is published to consumers and the collision is internal to this repository.
+Those accessors SHALL be inherited from `AbstractSpockRule` rather than declared on this class. The
+`@SuppressWarnings("PMD.DataClass")` that answers PMD for the mandated shape moves with them, so the
+suppression is stated once for every rule this artifact ships rather than once per rule. It remains a
+suppression rather than an exclusion in `rulesets/java/joke-strict.xml`, because that ruleset is
+published to consumers and the collision is internal to this repository.
+
+The rule SHALL additionally inherit `specificationSuperclassNames` and `specificationClassNames` from
+the base, and SHALL report only within a matching class. This narrows the rule: `@Unroll` outside a
+Spock specification is no longer reported. Nothing else annotates with `Unroll`, so the narrowing
+costs nothing and buys one answer to "when does a rule in this artifact apply" instead of two.
 
 #### Scenario: The defaults are the documented ones
 - **WHEN** a freshly constructed rule is inspected
@@ -80,10 +83,19 @@ that ruleset is published to consumers and the collision is internal to this rep
 - **WHEN** a ruleset sets the rule's name and priority
 - **THEN** the rule reports them as set
 
+#### Scenario: The accessors are not declared on the rule class
+- **WHEN** `AvoidUnrollAnnotationRule` is inspected
+- **THEN** it declares no `getName`, `setName`, `getPriority` or `setPriority`
+- **AND** it carries no `@SuppressWarnings("PMD.DataClass")` of its own
+
 #### Scenario: The suppression is local and explained
-- **WHEN** the rule class is inspected
+- **WHEN** `AbstractSpockRule` is inspected
 - **THEN** it carries `@SuppressWarnings("PMD.DataClass")` with a comment giving the reason
 - **AND** `rulesets/java/joke-strict.xml` does not exclude `DataClass`
+
+#### Scenario: A non-specification class is not reported
+- **WHEN** a Groovy class that does not extend `*Specification` carries `@Unroll`
+- **THEN** the rule reports no violation
 
 ### Requirement: The visitor does not call the empty base hooks
 The visitor's `visitClassEx` and `visitMethodEx` overrides SHALL NOT call `super`.

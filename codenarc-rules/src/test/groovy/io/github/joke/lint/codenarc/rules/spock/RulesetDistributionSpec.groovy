@@ -29,12 +29,17 @@ class RulesetDistributionSpec extends Specification {
 
     def 'the convenience ruleset resolves from the classpath'() {
         expect:
-        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke.groovy').rules*.name == ['AvoidUnrollAnnotation']
+        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke.groovy').rules*.name == [
+                'AvoidSetupAndGivenLabels',
+                'DeclareMockWithExplicitType',
+                'AvoidMockInitializerClosure',
+                'AvoidUnrollAnnotation',
+        ]
     }
 
     def 'the strict ruleset resolves from the classpath'() {
         expect:
-        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 113
+        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 116
     }
 
     def 'the strict ruleset carries the stock composition'() {

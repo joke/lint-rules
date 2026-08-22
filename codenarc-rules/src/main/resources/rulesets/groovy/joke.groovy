@@ -16,6 +16,12 @@ ruleset {
         neither covers the conventions this artifact exists to enforce.
     '''
 
+//    Fixture region of a specification
+    rule(io.github.joke.lint.codenarc.rules.spock.AvoidSetupAndGivenLabelsRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.DeclareMockWithExplicitTypeRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.AvoidMockInitializerClosureRule)
+
+//    Redundant annotations
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidUnrollAnnotationRule)
 
 }

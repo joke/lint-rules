@@ -5,7 +5,6 @@ import org.codehaus.groovy.ast.AnnotationNode;
 import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.MethodNode;
 import org.codenarc.rule.AbstractAstVisitor;
-import org.codenarc.rule.AbstractAstVisitorRule;
 import org.codenarc.rule.AstVisitor;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -16,40 +15,18 @@ import org.jetbrains.annotations.VisibleForTesting;
  * the runner already does. Left in place it reads as though it were switching a behaviour on, which
  * sends a reader looking for the un-annotated features that supposedly behave differently.
  *
- * <p>{@code PMD.DataClass} is suppressed because CodeNarc's rule contract mandates the shape the
- * rule reports: {@link org.codenarc.rule.AbstractRule} declares {@code name} and {@code priority} as
- * abstract read-write properties, because a ruleset configures a rule by setting them. Four of this
- * class's methods are therefore accessors it cannot decline to have, and every rule class this
- * artifact ever ships will carry the same four. The suppression states that once, per class, rather
- * than being answered by excluding the rule from the ruleset this project publishes to consumers.
+ * <p>The rule contract accessors and the specification gate live on {@link AbstractSpockRule}. The
+ * gate narrows this rule: {@code @Unroll} outside a Spock specification is no longer reported.
+ * Nothing else annotates with {@code Unroll}, so the narrowing costs nothing and buys one answer to
+ * "when does a rule in this artifact apply" instead of two.
  */
-@SuppressWarnings("PMD.DataClass")
-public class AvoidUnrollAnnotationRule extends AbstractAstVisitorRule {
+public class AvoidUnrollAnnotationRule extends AbstractSpockRule {
 
     private static final String RULE_NAME = "AvoidUnrollAnnotation";
     private static final int DEFAULT_PRIORITY = 2;
 
-    private String name = RULE_NAME;
-    private int priority = DEFAULT_PRIORITY;
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    @Override
-    public int getPriority() {
-        return priority;
-    }
-
-    @Override
-    public void setPriority(final int priority) {
-        this.priority = priority;
+    public AvoidUnrollAnnotationRule() {
+        super(RULE_NAME, DEFAULT_PRIORITY);
     }
 
     @Override

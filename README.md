@@ -118,10 +118,23 @@ itself encodes the Groovy line.
 | Groovy 5 | `org.codenarc:CodeNarc:4.0.0` and later | **yes** |
 
 The rule classes touch only `AbstractAstVisitorRule`, `AbstractAstVisitor`, `Violation`,
-`SourceCode` and `org.codehaus.groovy.ast.*`, so they would plausibly run on the older lines too —
-but nothing tests that, and a plausible claim is not a supported one. The Groovy 4 line additionally
-cannot carry the shipped composition at its own oldest release: `joke-strict.groovy` names
-`SpockMissingAssert`, which CodeNarc only added in 3.3.0.
+`SourceCode`, `org.codehaus.groovy.ast.*` and one CodeNarc class marked internal, so they would
+plausibly run on the older lines too — but nothing tests that, and a plausible claim is not a
+supported one. The Groovy 4 line additionally cannot carry the shipped composition
+at its own oldest release: `joke-strict.groovy` names `SpockMissingAssert`, which CodeNarc only added
+in 3.3.0.
+
+**One internal CodeNarc class is used deliberately.** `org.codenarc.rule.junit.SpockUtil`, whose
+Javadoc says it is not intended for general use, supplies the specification gate, the feature-method
+predicate and the Spock label vocabulary. The alternative was reimplementing them, which would make
+this artifact's judgement drift silently from the stock Spock rules you compose it with; depending on
+`SpockUtil` makes the same disagreement a loud failure instead.
+
+The exposure is stated rather than mitigated away. A CodeNarc release that renames or removes
+`SpockUtil` breaks these rules **inside your analysis**, not in this project's build. What the
+dependency flow buys is that this repository fails first — Dependabot raises `org.codenarc:CodeNarc`
+here, the build breaks, and the artifact is re-released. It does **not** protect you if you are
+already running a CodeNarc newer than this artifact's latest release.
 
 The published POM declares no dependencies. You supply CodeNarc yourself, on Gradle's `codenarc`
 configuration, at a version you choose.
@@ -615,6 +628,141 @@ violation is one import line.
 
 ## CodeNarc rules
 
+Every rule below is gated on the class being a Spock specification, and reports nothing outside one.
+See [The specification gate](#the-specification-gate) for what a consumer with a different base class
+sets.
+
+### AvoidSetupAndGivenLabels
+
+Reports a `setup:` or `given:` statement label inside a feature method.
+
+Spock treats unlabelled statements at the top of a feature method as the implicit setup block, so the
+label states what the statement's position already says. Removed, the blank line before `when:`
+carries the boundary.
+
+```groovy
+class ExampleSpec extends Specification {
+
+    def 'charges the order total'() {
+        given:                                     // violation
+        PaymentGateway gateway = Mock()
+
+        when:
+        service.checkout(order)
+
+        then:
+        1 * gateway.charge(49.99G)
+        0 * _
+    }
+
+    def 'refunds the order total'() {
+        PaymentGateway gateway = Mock()            // no violation: position says it
+
+        when:
+        service.refund(order)
+
+        then:
+        1 * gateway.refund(49.99G)
+        0 * _
+    }
+}
+```
+
+`when:`, `then:`, `expect:`, `where:`, `cleanup:`, `and:`, `filter:` and `combined:` are untouched.
+`and:` is a continuation with no semantic weight — CodeNarc's own label vocabulary excludes it for
+that reason — and `cleanup:` and `where:` have no unlabelled equivalent, so reporting them would
+demand a rewrite that does not exist.
+
+A `def setup()` or `def setupSpec()` fixture *method* is not reported. The rule reports only inside a
+method Spock would treat as a feature method, which is one carrying at least one statement label —
+the same definition Spock's own `SpecParser` uses. That is what keeps the rule off the fixture
+methods whose name it shares.
+
+### DeclareMockWithExplicitType
+
+Reports a dynamically-typed declaration whose initialiser is a call to `Mock`, `Stub` or `Spy`.
+
+**The rule is about the declaration, not about `Mock(Type)`.** An inline `Mock(Type)` passed straight
+to a constructor or a method is the documented way to supply a collaborator the specification never
+refers to again, and is never reported — there is no variable whose type could have been written.
+
+```groovy
+def service = new CheckoutService(Mock(PaymentGateway))  // no violation: declares no collaborator
+service.register(Mock(Listener))                         // no violation
+
+def repository = Mock(CustomerRepository)                // violation
+CustomerRepository repository = Mock()                   // no violation
+
+def service = Spy(OrderService, constructorArgs: [repo]) // violation
+OrderService service = Spy(constructorArgs: [repo])      // no violation
+```
+
+The declared type is what a reader looks at to learn who the subject collaborates with. Moved into
+the initialiser it is still present but no longer in the position that answers the question, and the
+variable itself is untyped for every later line that uses it.
+
+Fields are reported as well as local variables — a local is a declaration expression and a field is a
+field node with an initial expression, which are different nodes reached by different visits.
+Declaring collaborators as fields is the more common Spock form, so covering only locals would miss
+most of what the rule is for.
+
+### AvoidMockInitializerClosure
+
+Reports a `Mock`, `Stub` or `Spy` call whose last argument is a closure.
+
+```groovy
+CustomerRepository repository = Mock() {       // violation
+    findById(_) >> customer
+}
+
+CustomerRepository repository = Mock()         // no violation
+...
+then:
+1 * repository.findById('cust-1') >> customer
+0 * _
+```
+
+An interaction declared in the initialiser sits away from the `when:` it answers and reads as
+configuration rather than as verification. It also loses its cardinality: the initialiser form stubs
+a return without asserting that the call happened, which is the half of the contract worth having.
+
+`Spy(constructorArgs: [repository])` passes a map rather than a closure and is not reported —
+reporting it would leave no way to declare a spy over a real object.
+
+`def repository = Mock(Repo) { … }` violates this rule *and* `DeclareMockWithExplicitType`, and is
+reported by both. Each rule is independently selectable, so each has to be correct on its own;
+suppressing one report because another rule also fires would leave a hole for whoever adopted only
+one of the two.
+
+### The specification gate
+
+Every rule in this artifact reports only inside a class it recognises as a Spock specification, and
+each exposes the two properties CodeNarc's own Spock rules expose:
+
+| property | default | matched against |
+|---|---|---|
+| `specificationSuperclassNames` | `*Specification` | the superclass name as written |
+| `specificationClassNames` | unset | the class name |
+
+The rules match identifiers — `Mock`, `Stub`, `Spy`, and Spock's block labels — that are legal
+elsewhere in Groovy, and `DeclareMockWithExplicitType` is the one for which a collision outside a
+specification is realistic rather than theoretical. The gate is what keeps them off production code.
+
+If your specifications extend a base class of your own, name it:
+
+```groovy
+ruleset {
+    ruleset('rulesets/groovy/joke.groovy') {
+        'DeclareMockWithExplicitType' {
+            specificationSuperclassNames = '*Specification,*IntegrationBase'
+        }
+    }
+}
+```
+
+Both properties accept a comma-separated list and the `*` and `?` wildcards. A specification whose
+superclass matches neither is not analysed by any rule here.
+
 ### AvoidUnrollAnnotation
 
 Reports `@Unroll` on a specification class or a feature method.
@@ -653,7 +801,7 @@ resolved the annotation would report nothing whenever that classpath was incompl
 that a deliberately misleading `Unroll` from another package is reported too, which is the cheaper
 failure.
 
-The rest of the house Spock conventions land one rule at a time.
+The remaining house Spock conventions land in small thematic changes.
 
 ## Build
 

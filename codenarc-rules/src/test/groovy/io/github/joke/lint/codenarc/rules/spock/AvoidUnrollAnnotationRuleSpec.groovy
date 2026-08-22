@@ -16,6 +16,12 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
         rule.priority == 2
     }
 
+    def 'the specification gate defaults to any Specification subclass'() {
+        expect:
+        rule.specificationSuperclassNames == '*Specification'
+        rule.specificationClassNames == null
+    }
+
     def 'the name and priority are settable, as CodeNarc ruleset configuration requires'() {
         when:
         rule.name = 'Renamed'
@@ -26,10 +32,20 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
         rule.priority == 3
     }
 
+    def 'the gate properties are settable, as CodeNarc ruleset configuration requires'() {
+        when:
+        rule.specificationSuperclassNames = '*Base'
+        rule.specificationClassNames = '*Example'
+
+        then:
+        rule.specificationSuperclassNames == '*Base'
+        rule.specificationClassNames == '*Example'
+    }
+
     def 'an annotated feature method is reported'() {
         expect:
         violationsIn('''
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 @Unroll
                 def 'a feature'() { }
             }
@@ -39,7 +55,7 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
     def 'a fully qualified annotation is reported'() {
         expect:
         violationsIn('''
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 @spock.lang.Unroll
                 def 'a feature'() { }
             }
@@ -50,7 +66,7 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
         expect:
         violationsIn('''
             @Unroll
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 def 'a feature'() { }
             }
         ''').size() == 1
@@ -59,7 +75,7 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
     def 'an unannotated specification is not reported'() {
         expect:
         violationsIn('''
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 def 'a feature'() { }
             }
         ''').empty
@@ -68,7 +84,7 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
     def 'an unrelated annotation is not reported'() {
         expect:
         violationsIn('''
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 @Override
                 def 'a feature'() { }
             }
@@ -78,7 +94,7 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
     def 'an annotation whose simple name merely ends in Unroll is not reported'() {
         expect:
         violationsIn('''
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 @NotUnroll
                 def 'a feature'() { }
             }
@@ -89,11 +105,58 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
         expect:
         violationsIn('''
             @Unroll
-            class ExampleSpec {
+            class ExampleSpec extends Specification {
                 @Unroll
                 def 'a feature'() { }
             }
         ''').size() == 2
+    }
+
+    def 'a class that is not a specification is not reported'() {
+        expect:
+        violationsIn('''
+            @Unroll
+            class PlainClass {
+                @Unroll
+                def 'a method'() { }
+            }
+        ''').empty
+    }
+
+    def 'specificationClassNames widens the gate to a class that extends nothing'() {
+        rule.specificationClassNames = 'PlainClass'
+
+        expect:
+        violationsIn('''
+            class PlainClass {
+                @Unroll
+                def 'a method'() { }
+            }
+        ''').size() == 1
+    }
+
+    def 'specificationSuperclassNames retargets the gate at another base class'() {
+        rule.specificationSuperclassNames = 'CustomBase'
+
+        expect:
+        violationsIn('''
+            class ExampleSpec extends CustomBase {
+                @Unroll
+                def 'a feature'() { }
+            }
+        ''').size() == 1
+    }
+
+    def 'doNotApplyToClassNames still excludes a specification, as it does for any CodeNarc rule'() {
+        rule.doNotApplyToClassNames = 'ExampleSpec'
+
+        expect:
+        violationsIn('''
+            class ExampleSpec extends Specification {
+                @Unroll
+                def 'a feature'() { }
+            }
+        ''').empty
     }
 
     private List violationsIn(String source) {

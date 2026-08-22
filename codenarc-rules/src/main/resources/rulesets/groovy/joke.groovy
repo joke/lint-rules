@@ -21,6 +21,12 @@ ruleset {
     rule(io.github.joke.lint.codenarc.rules.spock.DeclareMockWithExplicitTypeRule)
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidMockInitializerClosureRule)
 
+//    Interactions in a feature method
+    rule(io.github.joke.lint.codenarc.rules.spock.InteractionsBelongInThenBlockRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.RequireValidatedInteractionArgumentsRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.RequireStrictMockingTerminatorRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.ValueAssertionsBelongInExpectBlockRule)
+
 //    Redundant annotations
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidUnrollAnnotationRule)
 

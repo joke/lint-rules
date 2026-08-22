@@ -33,13 +33,17 @@ class RulesetDistributionSpec extends Specification {
                 'AvoidSetupAndGivenLabels',
                 'DeclareMockWithExplicitType',
                 'AvoidMockInitializerClosure',
+                'InteractionsBelongInThenBlock',
+                'RequireValidatedInteractionArguments',
+                'RequireStrictMockingTerminator',
+                'ValueAssertionsBelongInExpectBlock',
                 'AvoidUnrollAnnotation',
         ]
     }
 
     def 'the strict ruleset resolves from the classpath'() {
         expect:
-        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 116
+        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 120
     }
 
     def 'the strict ruleset carries the stock composition'() {

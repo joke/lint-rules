@@ -632,6 +632,22 @@ Every rule below is gated on the class being a Spock specification, and reports 
 See [The specification gate](#the-specification-gate) for what a consumer with a different base class
 sets.
 
+**Expect volume on a codebase that has not adopted strict mocking.** The fixture rules fire on a
+declaration here and there. The four interaction rules judge a whole block, and
+`RequireStrictMockingTerminator` alone reports once per `then:` block that does not end with `0 * _` —
+which on a project that never adopted strict mocking is every `then:` block it has. A first run
+producing hundreds of violations is the adoption cost of these conventions, not a broken ruleset.
+
+Every rule is individually selectable and individually excludable. To take the artifact without one:
+
+```groovy
+ruleset {
+    ruleset('rulesets/groovy/joke.groovy') {
+        exclude 'RequireStrictMockingTerminator'
+    }
+}
+```
+
 ### AvoidSetupAndGivenLabels
 
 Reports a `setup:` or `given:` statement label inside a feature method.
@@ -733,6 +749,167 @@ reporting it would leave no way to declare a spy over a real object.
 reported by both. Each rule is independently selectable, so each has to be correct on its own;
 suppressing one report because another rule also fires would leave a hole for whoever adopted only
 one of the two.
+
+### InteractionsBelongInThenBlock
+
+Reports a Spock interaction anywhere in a feature method other than a `then:` block.
+
+```groovy
+def 'charges the order total'() {
+    repository.findById('cust-1') >> customer      // violation: reads as configuration
+
+    when:
+    def receipt = service.checkout(order)
+
+    then:
+    1 * gateway.charge(49.99G) >> receipt          // no violation
+    0 * _
+}
+```
+
+An interaction declares what the subject must call. Placed above `when:` it reads as configuration
+rather than verification and sits away from the action it answers; placed in `expect:` it mixes the
+collaboration contract into the value assertions.
+
+An interaction is recognised by its shape: a cardinality (`1 * mock.foo()`, `(1..3) * mock.foo()`,
+`_ * mock.foo()`), a stubbed return (`mock.foo() >> value`, `mock.foo() >>> [a, b]`), the two combined,
+or an `interaction { … }` block. Nothing asks whether the target is a mock, a stub, a spy or a real
+object — CodeNarc analyses source without a compile classpath, and the shape is what distinguishes an
+interaction in the first place. `service.warmUp()` and `def total = 2 * price` are not interactions.
+
+`and:` continues the block it follows rather than starting one, matching CodeNarc's own label
+vocabulary, which excludes `and:` because it carries no semantic weight. So an interaction in an
+`and:` after `then:` is compliant, and the same `and:` after `when:` is not.
+
+### RequireStrictMockingTerminator
+
+Reports a `then:` block whose last statement is not `0 * _`.
+
+```groovy
+then:
+1 * gateway.charge(49.99G) >> receipt
+0 * _                                              // no violation
+```
+
+`0 * _` asserts that no interaction other than the declared ones happened on any double. Without it a
+specification silently tolerates an extra call, which is the regression strict mocking exists to
+catch: an unplanned collaborator call should break a test until someone declares it on purpose.
+
+**The terminator is required whether or not the feature method declares a `Mock`, `Stub` or `Spy`.**
+Requiring it only when a double is in scope was rejected on the failing case rather than the common
+one: a specification with no collaborators today acquires one the moment the subject grows a
+dependency, and a conditional rule goes quiet exactly then — the `then:` block that was compliant
+yesterday is unterminated and nothing reports it.
+
+So a `then:` block containing nothing but the terminator is the intended shape, not an artefact. This
+repository's own `AvoidUnrollAnnotationRuleSpec` is the worked example:
+
+```groovy
+def 'the name and priority are settable, as CodeNarc ruleset configuration requires'() {
+    when:
+    rule.name = 'Renamed'
+    rule.priority = 3
+
+    then:
+    0 * _
+
+    expect:
+    rule.name == 'Renamed'
+    rule.priority == 3
+}
+```
+
+A `then:` and every `and:` following it are one run, terminated once at the end rather than once per
+`and:` — a terminator per `and:` would assert "nothing else happened" in the middle of a list still
+being declared. Only `then:` is asked for one: a feature method with no collaborators and a standalone
+`expect:` is a documented shape, and demanding a `then:` block there would demand a block with nothing
+to verify.
+
+### ValueAssertionsBelongInExpectBlock
+
+Reports a boolean expression in a `then:` block.
+
+```groovy
+then:
+1 * gateway.charge(49.99G) >> receipt
+receipt.total == 49.99G                            // violation
+0 * _
+
+expect:
+receipt.total == 49.99G                            // no violation
+```
+
+`then:` states who the subject called; `expect:` states what it returned. A `then:` block full of `==`
+buries the interaction contract in the middle of value checks, and the contract is the half a reader
+most needs to find.
+
+An interaction, a `thrown(…)` or `notThrown(…)` call, and a `def error = thrown(…)` capture all stay
+where they are. The exception's *message* does not — `error.message == '…'` is a value assertion like
+any other.
+
+**Known gap: a bare truthiness check is not reported.** `receipt.valid` in a `then:` block stays
+silent, while `receipt.isValid()` is reported. What counts as a value assertion is CodeNarc's own
+boolean-expression test, which recognises comparison operators and a set of method-name patterns. The
+alternative — report anything that is not an interaction and not `thrown` — would report an ordinary
+helper call in a `then:` block, a false positive on code that is not wrong. Sharing CodeNarc's
+judgement also means this rule and stock `SpockMissingAssert` never disagree about the same line. The
+rule under-reports rather than guesses, and widening the definition later is a change with its own
+evidence.
+
+### RequireValidatedInteractionArguments
+
+Reports an interaction argument that places no constraint on the value passed.
+
+```groovy
+1 * repository.save(_)                             // violation
+1 * repository.save(_ as Customer)                 // violation
+1 * repository.save(*_)                            // violation
+1 * repository.save({ true })                      // violation
+
+1 * repository.save(expectedCustomer)              // no violation
+1 * repository.save({ it.id == 'cust-1' })         // no violation
+```
+
+A mocked interaction is a contract about what the subject passes its collaborator. An argument that
+matches anything lets a wrong value through and leaves the contract asserting only that a call
+happened, which is the weaker half.
+
+`_ as Type` is reported too. It carries more information than a bare `_`, which makes it the closest
+call in the set, but it still accepts every instance of that type and the rule's subject is whether
+the *argument* was the right one.
+
+For the closure form the parameter list is irrelevant, so only the body is read: `{ true }`,
+`{ _ -> true }` and `{ it -> true }` differ in a parameter the body never uses. A body of one
+statement whose expression is a constant truthy under Groovy truth is reported, so `{ 1 }` is a
+violation and `{ 0 }` is not.
+
+**Only argument positions are examined.** `_` in target position is required by this rule's own
+family — `0 * _` by `RequireStrictMockingTerminator` — so `0 * _`, `1 * service._` and
+`1 * repository._(expectedCustomer)` are all silent.
+
+The rule applies to every interaction form on every kind of double, and reports wherever the
+interaction appears — including a field initialiser and a `Mock() { … }` closure — so an interaction
+moved out of a `then:` block to escape a sibling rule is still checked here.
+
+**Known gap: a closure that is truthy without being a bare constant is not reported.** `{ it }` is
+truthy for anything non-null and non-empty and constrains nothing, and `{ return true }` is the same
+closure written with a statement rather than an expression. Neither is reported: detecting the first
+would begin a general truthiness analysis this rule declines to start, and the second is the same
+check applied to a body shape the rule does not read. Both under-report rather than guess.
+
+### The interaction rules overlap on purpose
+
+`Mock() { findById(_) >> row }` violates `AvoidMockInitializerClosure` and
+`RequireValidatedInteractionArguments`, and both fire. An interaction in the setup region passing `_`
+violates `InteractionsBelongInThenBlock` and `RequireValidatedInteractionArguments`, and both fire. A
+`then:` block full of `==` with no terminator is reported by `ValueAssertionsBelongInExpectBlock` once
+per assertion and by `RequireStrictMockingTerminator` once for the block.
+
+Suppressing the second report because the first already condemned the line was considered and
+rejected. Every rule here is individually selectable, so a consumer may have adopted only one of the
+pair — and a rule that defers to a sibling would leave that consumer's ruleset silently missing the
+violation it selected a rule to catch. Two reports on one line is the lesser cost, and one edit
+removes both.
 
 ### The specification gate
 

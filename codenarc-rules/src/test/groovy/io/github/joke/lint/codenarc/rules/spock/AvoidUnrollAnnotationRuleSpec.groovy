@@ -28,6 +28,9 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
         rule.priority = 3
 
         then:
+        0 * _
+
+        expect:
         rule.name == 'Renamed'
         rule.priority == 3
     }
@@ -38,6 +41,9 @@ class AvoidUnrollAnnotationRuleSpec extends Specification {
         rule.specificationClassNames = '*Example'
 
         then:
+        0 * _
+
+        expect:
         rule.specificationSuperclassNames == '*Base'
         rule.specificationClassNames == '*Example'
     }

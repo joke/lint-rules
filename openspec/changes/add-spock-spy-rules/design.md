@@ -99,18 +99,23 @@ This is the one rule in the family that reports on ordering. It earns the except
 order is silently wrong — the specification still runs, and fails somewhere other than where the
 mistake is.
 
-### 4. `SpyStatic` is matched by name, and the API is not verified
+### 4. `SpyStatic` is matched by name, and the name is real
 
-`spock-core:2.4-groovy-5.0` contains no `SpyStatic`. `SpecInternals` declares `MockImpl`, `SpyImpl`
-and `GroovyMockImpl` with no static variant, and the string appears nowhere in the jar.
+An earlier draft of this design recorded `SpyStatic` as absent from
+`spock-core:2.4-groovy-5.0`. It is not. `spock.mock.MockingApi` declares
+`public <T> void SpyStatic(Class<T>)` and an overload taking `IMockMakerSettings`,
+`org.spockframework.runtime.SpecInternals` declares the `SpyStaticImpl` pair the compiler rewrites
+those calls into, and `org.spockframework.util.Identifiers` carries `SPY_STATIC` alongside `MOCK`,
+`STUB` and `SPY`. The rule therefore governs the placement of a call consumers can make today.
 
-The rule ships anyway, matching the call by name exactly as `AvoidUnrollAnnotation` matches `@Unroll`
-by name — CodeNarc analyses source without a compile classpath, so name-matching is the only option
-available to either rule. The consequence is favourable: where the API does not exist the rule is
-inert, and where a consumer's Spock provides it the placement is enforced.
+It still matches the call by name, exactly as `AvoidUnrollAnnotation` matches `@Unroll` by name.
+CodeNarc analyses source without a compile classpath, so name-matching is the only option available to
+either rule, and it is enough: the class gate keeps the bare name from matching outside a
+specification.
 
-What it does mean is that this rule has no dogfood evidence and its fixtures are its only corpus. That
-is recorded rather than smoothed over, and it is the reason the rule carries the lowest priority of
+What survives from the earlier reading is the evidence gap, which is a different thing from an API
+gap. No specification in this repository calls `SpyStatic`, so the rule ships with no dogfood
+violations and its fixtures are its only corpus. That is the reason it carries the lowest priority of
 the three.
 
 ### 5. `UseVerifyAllForMultipleProperties` reports two shapes and exempts one
@@ -146,9 +151,10 @@ question permanently.
 
 ## Risks / Trade-offs
 
-- **`AvoidSpyStaticInLabelledBlock` targets an API this build cannot exercise** → Decision 4. The
-  rule is inert where the API is absent, so the failure mode is "reports nothing" rather than "reports
-  wrongly". Accepted, recorded, and priority-ordered accordingly.
+- **`AvoidSpyStaticInLabelledBlock` has no corpus but its own fixtures** → Decision 4. The API is
+  real, so the rule is not inert; what is missing is a single call to it anywhere in this repository.
+  The failure mode of a name match is "reports nothing" rather than "reports wrongly", which is the
+  safe direction. Accepted, recorded, and priority-ordered accordingly.
 
 - **`RequireSpyEntryInteraction` is the family's only rule demanding an addition** → every other rule
   reports something present that should be removed or moved. A rule whose fix is "write another line"

@@ -55,14 +55,14 @@ method.
 CodeNarc analyses source without a compile classpath, so name-matching is the only mechanism
 available — the same choice `AvoidUnrollAnnotation` makes for `@Unroll`.
 
-`spock-core:2.4-groovy-5.0`, the Spock this repository builds against, contains no `SpyStatic`
-member: `SpecInternals` declares `MockImpl`, `SpyImpl` and `GroovyMockImpl` with no static variant,
-and the name appears nowhere in the jar. The rule therefore encodes a documented convention rather
-than an API this build can exercise, and SHALL be understood that way: where the API is absent the
-rule is inert, and where a consumer's Spock provides it the placement is enforced.
+`SpyStatic` is real API in the Spock this repository builds against. `spock-core:2.4-groovy-5.0`
+declares `spock.mock.MockingApi.SpyStatic(Class)` and an overload taking `IMockMakerSettings`, backed
+by `SpecInternals.SpyStaticImpl` and listed as `SPY_STATIC` in Spock's own `Identifiers`. The rule
+therefore governs the placement of a call consumers can make, and matching by name is a limitation of
+the analysis rather than a hedge against a missing API.
 
 The rule SHALL carry the lowest priority of the rules added alongside it, because it is the only one
-with no corpus beyond its own fixtures.
+with no corpus beyond its own fixtures: no specification in this repository calls `SpyStatic`.
 
 #### Scenario: The name is matched without resolution
 - **WHEN** a `then:` block contains `SpyStatic(PricingRules)` and no Spock class is on the classpath
@@ -72,10 +72,10 @@ with no corpus beyond its own fixtures.
 - **WHEN** a `then:` block contains `mySpyStatic(PricingRules)`
 - **THEN** the rule reports no violation
 
-#### Scenario: The absent-API caveat is documented
+#### Scenario: The evidence gap is documented
 - **WHEN** the README's section for this rule is read
-- **THEN** it states that `SpyStatic` is absent from the Spock this artifact builds against, and that
-  the rule is inert wherever the API does not exist
+- **THEN** it states that no specification in this artifact's own corpus calls `SpyStatic`, so the
+  rule's fixtures are its only evidence
 
 ### Requirement: The rule is gated on the class and on the feature method
 The rule SHALL report only within a class matching `specificationSuperclassNames` or

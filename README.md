@@ -633,7 +633,7 @@ See [The specification gate](#the-specification-gate) for what a consumer with a
 sets.
 
 **Expect volume on a codebase that has not adopted strict mocking.** The fixture rules fire on a
-declaration here and there. The four interaction rules judge a whole block, and
+declaration here and there. The interaction rules judge a whole block, and
 `RequireStrictMockingTerminator` alone reports once per `then:` block that does not end with `0 * _` —
 which on a project that never adopted strict mocking is every `then:` block it has. A first run
 producing hundreds of violations is the adoption cost of these conventions, not a broken ruleset.
@@ -647,6 +647,33 @@ ruleset {
     }
 }
 ```
+
+### Coverage of the Spock conventions
+
+Eleven rules against a checklist of twelve. Each row names the convention and the rule that enforces
+it; the last row is the one left to review, and the reason it is left there.
+
+| convention | rule |
+|---|---|
+| No `setup:` or `given:` label — position already says it | `AvoidSetupAndGivenLabels` |
+| `Type name = Mock()`, not `def name = Mock(Type)` | `DeclareMockWithExplicitType` |
+| No interactions in the `Mock()` initialiser | `AvoidMockInitializerClosure` |
+| Every interaction in `then:` | `InteractionsBelongInThenBlock` |
+| Every mocked argument validated — no bare `_` | `RequireValidatedInteractionArguments` |
+| `verifyAll` for several properties of one argument | `UseVerifyAllForMultipleProperties` |
+| Every `then:` ends with `0 * _` | `RequireStrictMockingTerminator` |
+| Value assertions in `expect:`, not `then:` | `ValueAssertionsBelongInExpectBlock` |
+| A spy's siblings are followed by `1 * subject._` | `RequireSpyEntryInteraction` |
+| `SpyStatic` is a setup statement, not a labelled one | `AvoidSpyStaticInLabelledBlock` |
+| No `@Unroll` — Spock 2 unrolls by default | `AvoidUnrollAnnotation` |
+| One feature method per method under test, protected ones included | **not enforced** |
+
+**"One feature method per method under test" is deliberately not enforced, and no later version will
+enforce it.** Deciding it needs the list of methods the subject declares. That list is in another
+file, and CodeNarc analyses source without a compile classpath, so a rule would have nothing to
+compare the specification against. Approximating it — matching feature-method names against method
+names, say — would report every specification whose feature names read as sentences, which is every
+specification this artifact ships. It stays a review convention.
 
 ### AvoidSetupAndGivenLabels
 
@@ -897,6 +924,141 @@ closure written with a statement rather than an expression. Neither is reported:
 would begin a general truthiness analysis this rule declines to start, and the second is the same
 check applied to a body shape the rule does not read. Both under-report rather than guess.
 
+### UseVerifyAllForMultipleProperties
+
+Reports an interaction's constraint closure that asserts more than one property without `verifyAll`.
+
+```groovy
+1 * repository.save({ it.name == 'Ada' && it.region == 'eu' })   // violation: a chain
+1 * repository.save({ it.name == 'Ada'; it.region == 'eu' })     // violation: two conditions
+
+1 * auditLog.record({ it.action == 'CHECKOUT' })                 // no violation: one property
+1 * repository.save({ Customer c ->                              // no violation: verifyAll
+    verifyAll(c) {
+        name == 'Ada'
+        region == 'eu'
+    }
+})
+```
+
+`verifyAll` evaluates every condition and reports all failures at once. A chain stops at the first, so
+a customer wrong in two fields reports one — and the second failure only surfaces after the first is
+fixed and the specification is run again. That is the diagnostic a reader needs least: one more round
+trip per wrong field.
+
+**A single property is exempt**, and this is not an oversight. The convention says the inline boolean
+closure is enough for one property, and a rule pushing `verifyAll` onto one condition would make the
+common case wordier for nothing — there is only one failure to report either way. A disjunction is one
+condition too: `{ it.region == 'eu' || it.region == 'uk' }` is a single question about a single
+property, not two assertions that could each fail.
+
+`with`, `verifyAll` and `verifyEach` all satisfy the rule — CodeNarc's own list of methods carrying
+implicit assertions — and a closure delegating to any of them is silent however many conditions it
+holds. No carve-out implements that: a condition is recognised by CodeNarc's boolean-expression test,
+and a call by any of those three names is not a boolean expression under it, so a wrapped closure
+holds no conditions of its own and never reaches the threshold.
+
+The rule examines interaction constraint closures only, wherever the interaction stands — including a
+stubbed return, `repository.findById({ it.id == 'x' && it.active }) >> customer`.
+
+**`expect:` blocks are out of scope.** The convention names `verifyAll` as the right tool for several
+properties of a returned value without making it a requirement, and the distinction it rests on is not
+available to static analysis: several assertions about one value and assertions about several
+different values have the same shape unless the rule knows what the expressions denote. A rule
+reporting every multi-assertion `expect:` block would report almost every specification this artifact
+ships, including the ones testing this rule.
+
+### RequireSpyEntryInteraction
+
+**Without `1 * spy._`, the `0 * _` terminator fails on the very call the feature method exists to
+make.** A spy's own methods count as interactions under strict mocking, and the method under test is
+itself invoked once — by `when:`. That entry call is an interaction on the spy like any other, so
+unless something accounts for it, `0 * _` reports it as the undeclared interaction it technically is.
+The specification fails on its own subject.
+
+This is the only rule in this artifact whose fix is to **add** a line. Every other one reports
+something present that should be moved or removed, and can be acted on without reading this section.
+
+```groovy
+OrderService service = Spy(constructorArgs: [repository])
+
+when:
+service.placeOrder(order)
+
+then:
+1 * service.validate(order)                        // a sibling, stubbed on the spy
+1 * repository.persist(order)
+1 * service._                                      // required: accounts for placeOrder()
+0 * _
+```
+
+Reported when a `then:` block declares one or more *specific* interactions on a spy and no
+`1 * spy._`. A block that constrains nothing on the spy needs no entry interaction — nothing in it is
+about to fail the terminator — so the rule stays silent there rather than putting a line into feature
+methods where it asserts nothing. `1 * spy._` is itself an interaction on the spy and does not count
+as the specific interaction that triggers the requirement; counting the remedy as its own trigger
+would satisfy the rule in exactly the blocks that never needed it.
+
+**The entry interaction must come last, and this is the only position check in the family.** Spock
+matches a declared interaction against a call in declaration order, and `1 * spy._` matches every
+method on the spy:
+
+```groovy
+then:
+1 * service._                                      // violation: declared first
+1 * service.validate(order)                        // ...so this never matches, and fails its count
+0 * _
+```
+
+Declared first, the entry interaction absorbs the sibling calls the specific interactions were written
+to verify, and those then fail their own counts. The specification still runs and still fails — just
+somewhere other than where the mistake is. Ordering earns the exception the other rules do not get
+because the wrong order is *silently* wrong. Combined with `RequireStrictMockingTerminator`, the tail
+of a spy `then:` block is fixed: the specific interactions, then `1 * spy._`, then `0 * _`.
+
+A spy is recognised from a declaration whose initialiser is a `Spy` call — `Spy(Type)`,
+`Spy(constructorArgs: [ … ])` and `Spy(realInstance)` alike — as a local in the feature method or as a
+field on the specification. **A spy arriving from anywhere else is invisible and the rule stays
+silent.** A subject handed over by a helper method or a base class cannot be recognised without
+resolution, and a rule that guessed would demand `1 * x._` for a variable that is not a spy — a
+violation whose only fix is to add a line that breaks the specification. Under-reporting is the safe
+direction here in particular.
+
+### AvoidSpyStaticInLabelledBlock
+
+Reports a call to `SpyStatic` under any Spock statement label.
+
+```groovy
+def 'applies the configured regional tax rate'() {
+    SpyStatic(PricingRules)                        // no violation: unlabelled setup
+    def service = new InvoiceService()
+
+    when:
+    def total = service.totalWithTax(100G, 'eu')
+
+    then:
+    SpyStatic(PricingRules)                        // violation: not a verification
+    1 * PricingRules.taxRate('eu') >> 0.20G
+    0 * _
+}
+```
+
+`SpyStatic` enables static mocking for the whole feature method. It belongs with the other unlabelled
+setup statements at the top, where a reader looks for what the method arranges. Placed in `then:` it
+sits among interaction verifications and reads as one, which it is not — it declares nothing about
+what was called.
+
+The call is matched on the name as written, with no attempt to resolve it, exactly as
+`AvoidUnrollAnnotation` matches `@Unroll`. CodeNarc analyses source without a compile classpath, so
+name-matching is the only mechanism available, and the specification gate is what keeps the bare name
+from matching elsewhere. A name that merely ends in `SpyStatic` is not matched.
+
+**This rule ships with no evidence beyond its own fixtures.** `SpyStatic` is real API in the Spock this
+artifact builds against — `spock.mock.MockingApi` declares it, `SpecInternals.SpyStaticImpl` implements
+it, and Spock's own `Identifiers` lists it next to `Mock`, `Stub` and `Spy` — but no specification in
+this repository calls it, so the rule has never fired on real code here. That is why it carries
+priority 3 where the other ten carry 2.
+
 ### The interaction rules overlap on purpose
 
 `Mock() { findById(_) >> row }` violates `AvoidMockInitializerClosure` and
@@ -904,6 +1066,11 @@ check applied to a body shape the rule does not read. Both under-report rather t
 violates `InteractionsBelongInThenBlock` and `RequireValidatedInteractionArguments`, and both fire. A
 `then:` block full of `==` with no terminator is reported by `ValueAssertionsBelongInExpectBlock` once
 per assertion and by `RequireStrictMockingTerminator` once for the block.
+
+One pair *cannot* overlap, and that is by construction rather than by suppression:
+`RequireValidatedInteractionArguments` reports a constraint closure whose body is a single truthy
+constant, and `UseVerifyAllForMultipleProperties` requires more than one condition. No closure
+satisfies both predicates, so `{ true }` is reported once and only by the first.
 
 Suppressing the second report because the first already condemned the line was considered and
 rejected. Every rule here is individually selectable, so a consumer may have adopted only one of the
@@ -978,7 +1145,9 @@ resolved the annotation would report nothing whenever that classpath was incompl
 that a deliberately misleading `Unroll` from another package is reported too, which is the cheaper
 failure.
 
-The remaining house Spock conventions land in small thematic changes.
+That is the whole checklist. Eleven rules cover every Spock convention this project holds that static
+analysis can decide; the twelfth is named in [Coverage of the Spock
+conventions](#coverage-of-the-spock-conventions) and stays a review convention.
 
 ## Build
 

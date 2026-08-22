@@ -3,6 +3,7 @@ package io.github.joke.lint.codenarc.rules.spock;
 import static org.codenarc.rule.junit.SpockUtil.getClosureArgument;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.codehaus.groovy.ast.expr.BinaryExpression;
 import org.codehaus.groovy.ast.expr.ConstantExpression;
@@ -70,6 +71,18 @@ public final class SpockInteraction {
 
     public boolean isPresent() {
         return target != null;
+    }
+
+    /**
+     * The expression the interaction constrains — a method call, a property access or a bare variable
+     * — or nothing when the expression is not an interaction at all.
+     *
+     * <p>Read by {@link RequireSpyEntryInteractionRule}, the one rule that needs to know <em>which</em>
+     * double an interaction names and whether it names one method or all of them. The others ask only
+     * whether an interaction is present, whether it is the terminator, or what it passes.
+     */
+    public Optional<Expression> getTarget() {
+        return Optional.ofNullable(target);
     }
 
     /**

@@ -24,8 +24,13 @@ ruleset {
 //    Interactions in a feature method
     rule(io.github.joke.lint.codenarc.rules.spock.InteractionsBelongInThenBlockRule)
     rule(io.github.joke.lint.codenarc.rules.spock.RequireValidatedInteractionArgumentsRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.UseVerifyAllForMultiplePropertiesRule)
     rule(io.github.joke.lint.codenarc.rules.spock.RequireStrictMockingTerminatorRule)
     rule(io.github.joke.lint.codenarc.rules.spock.ValueAssertionsBelongInExpectBlockRule)
+
+//    Spies
+    rule(io.github.joke.lint.codenarc.rules.spock.RequireSpyEntryInteractionRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.AvoidSpyStaticInLabelledBlockRule)
 
 //    Redundant annotations
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidUnrollAnnotationRule)

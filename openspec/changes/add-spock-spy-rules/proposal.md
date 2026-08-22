@@ -64,14 +64,15 @@ Each rule extends `AbstractSpockRule` and reads the feature-method model built b
   `add-spock-interaction-rules` (for the block partition and the interaction classifier).
 - **New**: three rule classes, three Spock specifications, three entries in
   `rulesets/groovy/joke.groovy`, three README sections.
-- **`SpyStatic` is not in this repository's Spock.** `spock-core:2.4-groovy-5.0` contains no
-  `SpyStatic` member — `SpecInternals` declares `MockImpl`, `SpyImpl`, `GroovyMockImpl` and no static
-  variant, and the string appears nowhere in the jar. The convention is documented in the
-  `spock-coding-conventions` skill, so the rule encodes house style rather than an API this build can
-  exercise. The rule needs no resolution to work — it matches the call by name, exactly as
-  `AvoidUnrollAnnotation` matches `@Unroll` — but it ships with no dogfood evidence and its fixtures
-  are its only corpus. If the convention is wrong about the API, the rule is inert rather than
-  incorrect.
+- **`SpyStatic` is real API in this repository's Spock.** An earlier draft of this proposal recorded
+  the opposite; the jar says otherwise. `spock-core:2.4-groovy-5.0` declares
+  `spock.mock.MockingApi.SpyStatic(Class)` and an overload taking `IMockMakerSettings`, with
+  `SpecInternals.SpyStaticImpl` behind them and `SPY_STATIC` in Spock's own `Identifiers` list. So the
+  rule governs placement of a call consumers can actually make, not a hypothetical one. It still
+  matches the call by name, exactly as `AvoidUnrollAnnotation` matches `@Unroll`, because CodeNarc
+  analyses source without a compile classpath. What remains true is that **no specification in this
+  repository calls it**, so the rule ships with no dogfood evidence and its fixtures are its only
+  corpus.
 - **`RulesetDistributionSpec`**: expected names go from eight to eleven, and the strict ruleset's rule
   count from 120 to 123.
 - **This repository has no violations of any of the three.** No specification here declares a `Spy`,

@@ -1,15 +1,14 @@
 package io.github.joke.lint.codenarc.rules.spock;
 
-import java.util.Set;
+import org.codehaus.groovy.ast.ASTNode;
+import org.codehaus.groovy.ast.ClassNode;
 import org.codehaus.groovy.ast.FieldNode;
 import org.codehaus.groovy.ast.expr.DeclarationExpression;
 import org.codehaus.groovy.ast.expr.Expression;
-import org.codehaus.groovy.ast.expr.MethodCallExpression;
 import org.codehaus.groovy.ast.expr.VariableExpression;
 import org.codenarc.rule.AbstractAstVisitor;
 import org.codenarc.rule.AstVisitor;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Reports a dynamically-typed declaration whose initialiser is a call to {@code Mock}, {@code Stub}
@@ -19,6 +18,12 @@ import org.jspecify.annotations.Nullable;
  * def repository = Mock(CustomerRepository)      // reported
  * CustomerRepository repository = Mock()         // compliant
  * }</pre>
+ *
+ * <p>The type is written once. A typed declaration that repeats it as the factory's argument —
+ * {@code TypeMirror mirror = Stub(TypeMirror)} — is reported too, because Spock infers the double's
+ * type from the variable's. Only the <em>same</em> type is reported: {@code Collection<String> items
+ * = Mock(List)} carries information the declared type cannot, and removing the argument would change
+ * what is created.
  *
  * <p>The declared type is what a reader looks at to learn who the subject collaborates with. Moved
  * into the initialiser it is still present but no longer in the position that answers the question,
@@ -46,10 +51,13 @@ public class DeclareMockWithExplicitTypeRule extends AbstractSpockRule {
     public static class DeclareMockWithExplicitTypeAstVisitor
             extends AbstractAstVisitor<DeclareMockWithExplicitTypeRule> {
 
-        private static final Set<String> MOCK_FACTORIES = Set.of("Mock", "Stub", "Spy");
+        private final MockFactories factories = new MockFactories();
 
         private static final String MESSAGE =
                 "Declare the collaborator's type on the left: 'Type name = Mock()' rather than 'def name = Mock(Type)'.";
+
+        private static final String REPEATED_MESSAGE =
+                "Drop the type argument: the declared type already says it, so write 'Type name = Mock()'.";
 
         @Override
         public void visitDeclarationExpression(final DeclarationExpression expression) {
@@ -80,43 +88,38 @@ public class DeclareMockWithExplicitTypeRule extends AbstractSpockRule {
          */
         @VisibleForTesting
         void reportUntypedLocal(final DeclarationExpression expression) {
-            if (isFirstVisit(expression)
-                    && isDynamicVariable(expression.getLeftExpression())
-                    && isMockCall(expression.getRightExpression())) {
-                addViolation(expression, MESSAGE);
+            if (isFirstVisit(expression) && expression.getLeftExpression() instanceof VariableExpression) {
+                final var variable = (VariableExpression) expression.getLeftExpression();
+                reportDeclaration(
+                        expression,
+                        variable.getOriginType(),
+                        variable.isDynamicTyped(),
+                        expression.getRightExpression());
             }
         }
 
         @VisibleForTesting
         void reportUntypedField(final FieldNode node) {
-            if (node.isDynamicTyped() && isMockCall(node.getInitialExpression())) {
+            reportDeclaration(node, node.getOriginType(), node.isDynamicTyped(), node.getInitialExpression());
+        }
+
+        @VisibleForTesting
+        void reportDeclaration(
+                final ASTNode node, final ClassNode declared, final boolean dynamic, final Expression initialiser) {
+            factories.read(initialiser).ifPresent(call -> reportCall(node, call, declared, dynamic));
+        }
+
+        /**
+         * An untyped declaration is reported for what it hides, a typed one for what it repeats. The
+         * two are exclusive: a variable is either dynamically typed or it is not.
+         */
+        @VisibleForTesting
+        void reportCall(final ASTNode node, final MockCall call, final ClassNode declared, final boolean dynamic) {
+            if (dynamic) {
                 addViolation(node, MESSAGE);
+            } else if (call.repeats(declared)) {
+                addViolation(node, REPEATED_MESSAGE);
             }
-        }
-
-        @VisibleForTesting
-        boolean isDynamicVariable(final Expression expression) {
-            return expression instanceof VariableExpression && ((VariableExpression) expression).isDynamicTyped();
-        }
-
-        /**
-         * Matched by name only. The call arrives as an implicit-{@code this} invocation on the
-         * specification, but nothing here depends on the receiver: resolving {@code Mock} to Spock's
-         * {@code MockingApi} would need a compile classpath CodeNarc does not have, and the class
-         * gate is what keeps the bare name from matching outside a specification.
-         */
-        @VisibleForTesting
-        boolean isMockCall(final @Nullable Expression expression) {
-            return expression instanceof MethodCallExpression && isMockFactory((MethodCallExpression) expression);
-        }
-
-        /**
-         * Compared through the set rather than {@code contains}, because {@code getMethodAsString}
-         * is null for a dynamically-named call and {@link Set#of} throws on a null lookup.
-         */
-        @VisibleForTesting
-        boolean isMockFactory(final MethodCallExpression call) {
-            return MOCK_FACTORIES.stream().anyMatch(factory -> factory.equals(call.getMethodAsString()));
         }
     }
 }

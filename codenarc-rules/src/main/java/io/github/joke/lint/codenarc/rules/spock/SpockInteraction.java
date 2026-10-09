@@ -86,6 +86,30 @@ public final class SpockInteraction {
     }
 
     /**
+     * A plain cardinality form — {@code 1 * mock.foo()} — as opposed to a stubbed one or an {@code
+     * interaction { }} block. A stubbed interaction is read as written, so it carries no cardinality
+     * here even though {@code *} binds tighter and one is nested inside it; "counted" is therefore
+     * also "states no response".
+     */
+    public boolean isCounted() {
+        return cardinality != null;
+    }
+
+    /** A literal {@code 0 *}: the call is asserted never to happen, whatever it targets. */
+    public boolean isNeverCalled() {
+        return isNever(cardinality);
+    }
+
+    /**
+     * {@code spy._} — the target is a property access whose property is literally {@code _}. Not
+     * {@code spy._(argument)}, which parses as a call, and not a pattern-matched method name.
+     */
+    public boolean isEntryCall() {
+        return target instanceof PropertyExpression
+                && WILDCARD.equals(((PropertyExpression) target).getPropertyAsString());
+    }
+
+    /**
      * {@code 0 * _} — the strict mocking terminator, and the one interaction that asserts about every
      * double at once rather than about a named collaborator.
      */

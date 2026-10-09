@@ -7,19 +7,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import org.codehaus.groovy.ast.ClassNode;
-import org.codehaus.groovy.ast.FieldNode;
 import org.codehaus.groovy.ast.MethodNode;
-import org.codehaus.groovy.ast.expr.DeclarationExpression;
 import org.codehaus.groovy.ast.expr.Expression;
-import org.codehaus.groovy.ast.expr.MethodCallExpression;
-import org.codehaus.groovy.ast.expr.PropertyExpression;
-import org.codehaus.groovy.ast.expr.VariableExpression;
 import org.codehaus.groovy.ast.stmt.ExpressionStatement;
 import org.codehaus.groovy.ast.stmt.Statement;
 import org.codenarc.rule.AstVisitor;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jspecify.annotations.Nullable;
 
 /**
  * Reports a {@code then:} block that declares interactions on a {@code Spy} without also declaring
@@ -82,78 +75,28 @@ public class RequireSpyEntryInteractionRule extends AbstractSpockRule {
     public static class RequireSpyEntryInteractionAstVisitor
             extends AbstractSpockBlockVisitor<RequireSpyEntryInteractionRule> {
 
-        private static final String SPY_FACTORY = "Spy";
-        private static final String WILDCARD = "_";
-
-        /** The spies in scope: the specification's spy fields plus the feature method's spy locals. */
-        private final Set<String> spies = new LinkedHashSet<>();
+        private final SpyScope spies = new SpyScope();
 
         /**
-         * Spy fields are read from the class rather than accumulated as they are visited, because a
-         * field declared below a feature method is still in scope inside it. Locals are cleared here
-         * so that a spy in one feature method is not a spy in the next.
+         * Entered for every method so that the spy fields are those of the current class and the
+         * locals are those of the current feature method.
          */
         @Override
         public void visitMethodEx(final MethodNode node) {
-            collectSpyFields(getCurrentClassNode());
+            spies.enter(getCurrentClassNode());
             super.visitMethodEx(node);
         }
 
-        @VisibleForTesting
-        void collectSpyFields(final ClassNode classNode) {
-            spies.clear();
-            classNode.getFields().forEach(this::collectSpyField);
-        }
-
-        @VisibleForTesting
-        void collectSpyField(final FieldNode field) {
-            if (isSpyCall(field.getInitialExpression())) {
-                spies.add(field.getName());
-            }
-        }
-
         /**
-         * Locals are collected from every block, including the one being judged, because a
-         * declaration always precedes the block that verifies it. A {@code then:} run is judged after
-         * its own statements have been read, which costs nothing: a spy declared inside {@code then:}
-         * has no interactions above it.
+         * A {@code then:} run is judged after its own statements have been read, which costs
+         * nothing: a spy declared inside {@code then:} has no interactions above it.
          */
         @Override
         public void visitBlock(final String label, final List<Statement> statements) {
-            statements.forEach(this::collectSpyLocal);
+            spies.collectLocals(statements);
             if (THEN_LABEL.equals(label)) {
                 judgeRun(statements);
             }
-        }
-
-        @VisibleForTesting
-        void collectSpyLocal(final Statement statement) {
-            expressionOf(statement).ifPresent(this::collectSpyDeclaration);
-        }
-
-        /**
-         * {@code Spy(Type)}, {@code Spy(constructorArgs: [ … ])} and {@code Spy(realInstance)} differ
-         * only in their arguments, so matching the factory name recognises all three. The declared
-         * type is not read either: {@code DeclareMockWithExplicitType} is separately selectable, and a
-         * consumer who has not adopted it still has spies.
-         */
-        @VisibleForTesting
-        void collectSpyDeclaration(final Expression expression) {
-            if (expression instanceof DeclarationExpression
-                    && isSpyCall(((DeclarationExpression) expression).getRightExpression())) {
-                nameOf(((DeclarationExpression) expression).getLeftExpression()).ifPresent(spies::add);
-            }
-        }
-
-        /**
-         * Matched by name only, for the reason {@link DeclareMockWithExplicitTypeRule} gives: the call
-         * arrives as an implicit-{@code this} invocation, resolving it would need a compile classpath,
-         * and the class gate is what keeps the bare name from matching outside a specification.
-         */
-        @VisibleForTesting
-        boolean isSpyCall(final @Nullable Expression expression) {
-            return expression instanceof MethodCallExpression
-                    && SPY_FACTORY.equals(((MethodCallExpression) expression).getMethodAsString());
         }
 
         /**
@@ -224,7 +167,7 @@ public class RequireSpyEntryInteractionRule extends AbstractSpockRule {
         /** The spy an interaction names, or nothing when the statement names no spy in scope. */
         @VisibleForTesting
         Optional<String> spyNamedBy(final Statement statement) {
-            return targetOf(statement).flatMap(this::receiverOf).filter(spies::contains);
+            return targetOf(statement).flatMap(spies::spyNamedBy);
         }
 
         @VisibleForTesting
@@ -233,42 +176,15 @@ public class RequireSpyEntryInteractionRule extends AbstractSpockRule {
         }
 
         /**
-         * {@code spy._} parses as a property access rather than a call, which is what separates it
-         * from {@code spy._(argument)} — a constraint on every method's argument, and a specific
-         * interaction like any other. The cardinality is not read: the convention writes {@code 1 *},
-         * a spy entered twice writes {@code 2 *}, and reading the count would report the second.
+         * The cardinality is not read: the convention writes {@code 1 *}, a spy entered twice writes
+         * {@code 2 *}, and reading the count would report the second.
          */
         @VisibleForTesting
         boolean isEntryInteraction(final Statement statement) {
-            return targetOf(statement).filter(this::isWildcardProperty).isPresent();
-        }
-
-        @VisibleForTesting
-        boolean isWildcardProperty(final Expression target) {
-            return target instanceof PropertyExpression
-                    && WILDCARD.equals(((PropertyExpression) target).getPropertyAsString());
-        }
-
-        @VisibleForTesting
-        Optional<String> receiverOf(final Expression target) {
-            if (target instanceof MethodCallExpression) {
-                return nameOf(((MethodCallExpression) target).getObjectExpression());
-            }
-            if (target instanceof PropertyExpression) {
-                return nameOf(((PropertyExpression) target).getObjectExpression());
-            }
-            return nameOf(target);
-        }
-
-        /**
-         * Empty for anything that is not a plain variable, which turns away the left side of a
-         * multiple assignment and the implicit {@code this} of a bare call.
-         */
-        @VisibleForTesting
-        Optional<String> nameOf(final Expression expression) {
-            return expression instanceof VariableExpression
-                    ? Optional.of(((VariableExpression) expression).getName())
-                    : Optional.empty();
+            return expressionOf(statement)
+                    .map(SpockInteraction::new)
+                    .filter(SpockInteraction::isEntryCall)
+                    .isPresent();
         }
 
         @VisibleForTesting

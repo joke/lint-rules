@@ -111,6 +111,107 @@ class DeclareMockWithExplicitTypeRuleSpec extends Specification {
         inClassBody('def factory = { def repository = Mock(Repo) }').size() == 1
     }
 
+    def 'a typed Stub repeating its type is reported'() {
+        expect:
+        inFeature('TypeMirror mirror = Stub(TypeMirror)')*.message ==
+                ["Drop the type argument: the declared type already says it, so write 'Type name = Mock()'."]
+    }
+
+    def 'a typed Mock repeating its type is reported'() {
+        expect:
+        inFeature('CustomerRepository repository = Mock(CustomerRepository)').size() == 1
+    }
+
+    def 'a typed Spy repeating its type with constructor arguments is reported'() {
+        expect:
+        inFeature('OrderService service = Spy(OrderService, constructorArgs: [repository])').size() == 1
+    }
+
+    def 'a repeated type on a generic declaration is reported'() {
+        expect:
+        inFeature('List<String> items = Mock(List)').size() == 1
+    }
+
+    def 'a repeated type written with a class suffix is reported'() {
+        expect:
+        inFeature('CustomerRepository repository = Mock(CustomerRepository.class)').size() == 1
+    }
+
+    def 'a repeated type written qualified is reported'() {
+        expect:
+        inFeature('List<String> items = Mock(java.util.List)').size() == 1
+    }
+
+    def 'a qualified declared type repeated unqualified is reported'() {
+        expect:
+        inFeature('java.util.List<String> items = Mock(List)').size() == 1
+    }
+
+    def 'a nested type repeated is reported'() {
+        expect:
+        inFeature('Outer.Inner inner = Mock(Outer.Inner)').size() == 1
+    }
+
+    def 'a different nested type is not reported'() {
+        expect:
+        inFeature('Outer.Inner inner = Mock(Other.Inner)').empty
+    }
+
+    def 'two differently qualified types of one simple name are not reported'() {
+        expect:
+        inFeature('java.util.List items = Mock(java.awt.List)').empty
+    }
+
+    def 'a type of a longer name ending in the declared name is not reported'() {
+        expect:
+        inFeature('Repository repository = Mock(CustomerRepository)').empty
+    }
+
+    def 'a repeated type on a typed field is reported'() {
+        expect:
+        inClassBody('CustomerRepository repository = Mock(CustomerRepository)').size() == 1
+    }
+
+    def 'a repeated type with an initialiser closure is reported'() {
+        expect:
+        inFeature('CustomerRepository repository = Mock(CustomerRepository) { findById(_) >> row }').size() == 1
+    }
+
+    def 'a different type in the factory call is not reported'() {
+        expect:
+        inFeature('Collection<String> items = Mock(List)').empty
+    }
+
+    def 'a spy over a real instance is not reported'() {
+        expect:
+        inFeature('OrderService service = Spy(realService)').empty
+    }
+
+    def 'a typed declaration with no type argument is not reported'() {
+        expect:
+        inFeature('TypeMirror mirror = Stub()').empty
+    }
+
+    def 'a typed declaration with only named arguments is not reported'() {
+        expect:
+        inFeature("TypeMirror mirror = Stub(name: 'mirror')").empty
+    }
+
+    def 'a typed declaration initialised from something else is not reported'() {
+        expect:
+        inFeature('TypeMirror mirror = build(TypeMirror)').empty
+    }
+
+    def 'a typed declaration with a non-type argument is not reported'() {
+        expect:
+        inFeature("TypeMirror mirror = Stub('TypeMirror')").empty
+    }
+
+    def 'an untyped declaration repeating a type is reported once'() {
+        expect:
+        inFeature('def mirror = Stub(TypeMirror)').size() == 1
+    }
+
     def 'a class that is not a specification is not reported'() {
         expect:
         violationsIn('''

@@ -650,13 +650,14 @@ ruleset {
 
 ### Coverage of the Spock conventions
 
-Eleven rules against a checklist of twelve. Each row names the convention and the rule that enforces
+Thirteen rules against a checklist of fourteen. Each row names the convention and the rule that enforces
 it; the last row is the one left to review, and the reason it is left there.
 
 | convention | rule |
 |---|---|
 | No `setup:` or `given:` label — position already says it | `AvoidSetupAndGivenLabels` |
-| `Type name = Mock()`, not `def name = Mock(Type)` | `DeclareMockWithExplicitType` |
+| `Type name = Mock()`, not `def name = Mock(Type)` or `Type name = Mock(Type)` | `DeclareMockWithExplicitType` |
+| No `@Shared` or `static` double | `AvoidSharedOrStaticMock` |
 | No interactions in the `Mock()` initialiser | `AvoidMockInitializerClosure` |
 | Every interaction in `then:` | `InteractionsBelongInThenBlock` |
 | Every mocked argument validated — no bare `_` | `RequireValidatedInteractionArguments` |
@@ -664,6 +665,7 @@ it; the last row is the one left to review, and the reason it is left there.
 | Every `then:` ends with `0 * _` | `RequireStrictMockingTerminator` |
 | Value assertions in `expect:`, not `then:` | `ValueAssertionsBelongInExpectBlock` |
 | A spy's siblings are followed by `1 * subject._` | `RequireSpyEntryInteraction` |
+| A spy interaction states its response — `>>`, or `>> { callRealMethod() }` | `RequireSpyInteractionResponse` |
 | `SpyStatic` is a setup statement, not a labelled one | `AvoidSpyStaticInLabelledBlock` |
 | No `@Unroll` — Spock 2 unrolls by default | `AvoidUnrollAnnotation` |
 | One feature method per method under test, protected ones included | **not enforced** |
@@ -748,6 +750,44 @@ Fields are reported as well as local variables — a local is a declaration expr
 field node with an initial expression, which are different nodes reached by different visits.
 Declaring collaborators as fields is the more common Spock form, so covering only locals would miss
 most of what the rule is for.
+
+**A typed declaration that repeats its type is reported too.** Spock infers the double's type from
+the declared type of the variable, so the argument says nothing the left side does not.
+
+```groovy
+TypeMirror mirror = Stub(TypeMirror)                     // violation
+TypeMirror mirror = Stub()                               // no violation
+
+Collection<String> items = Mock(List)                    // no violation: a different type
+OrderService service = Spy(realService)                  // no violation: an instance, not a type
+```
+
+Only the *same* type is reported. `Collection<String> items = Mock(List)` carries information the
+declared type cannot, and removing the argument would change what is created. Types are compared by
+name as written, generics ignored, and a qualified name matches its unqualified form — the import
+decides which is written. Two differently qualified names are different types.
+
+**This rule reports more than it did.** A consumer that already selects it can see new violations on
+upgrade, from declarations it was silent on before.
+
+### AvoidSharedOrStaticMock
+
+Reports a field that is `@Shared` or `static` and is initialised from `Mock`, `Stub` or `Spy`.
+
+```groovy
+@Shared CustomerRepository repository = Mock()     // violation
+static CustomerRepository repository = Stub()      // violation
+CustomerRepository repository = Mock()             // no violation
+```
+
+A double that outlives the feature method is outside the scope in which Spock verifies interactions,
+so strict mocking cannot hold for it. Every double is created per feature method, where its
+interactions are checked.
+
+**One gap is documented rather than closed.** `@Shared Foo foo` followed by `foo = Mock()` in
+`setupSpec` has no initialiser to inspect. Catching it needs a write-tracking pass across methods,
+and this artifact under-reports rather than infers. `@Shared` is matched by name as written, as
+`@Unroll` is.
 
 ### AvoidMockInitializerClosure
 
@@ -1024,6 +1064,31 @@ resolution, and a rule that guessed would demand `1 * x._` for a variable that i
 violation whose only fix is to add a line that breaks the specification. Under-reporting is the safe
 direction here in particular.
 
+### RequireSpyInteractionResponse
+
+Reports a counted interaction on a spy that states no response.
+
+```groovy
+1 * service.validate(order)                          // violation: calls the real method
+1 * service.validate(order) >> true                  // no violation
+1 * service.validate(order) >> { callRealMethod() }  // no violation: the call-through, said aloud
+1 * service._                                        // no violation: the entry interaction
+0 * service.audit(order)                             // no violation: never called
+```
+
+Without a response, an interaction on a spy calls the *real* method. That is rarely what
+`1 * service.validate(order)` reads as, so the call-through is stated.
+
+**Exactly `spy._` is exempt, and nothing wider.** It is the short, deliberate way to allow the spy's
+one self-call from `when:`, and `RequireSpyEntryInteraction` requires it. `1 * service._(order)` is a
+filter over every method's argument, and a pattern-matched method name selects methods nobody named;
+either can call real code the author never listed, so both are reported. The cardinality on `spy._` is
+not read — the entry rule does not read it either, and the two must not disagree about `2 * service._`.
+
+A spy is recognised from its declaration, as `RequireSpyEntryInteraction` does it. A `Mock` returns a
+default and a `Stub` an empty value, so neither is in scope, and a spy from a helper method, base class
+or parameter is invisible. Interactions inside an `interaction { }` closure are not visited.
+
 ### AvoidSpyStaticInLabelledBlock
 
 Reports a call to `SpyStatic` under any Spock statement label.
@@ -1057,7 +1122,7 @@ from matching elsewhere. A name that merely ends in `SpyStatic` is not matched.
 artifact builds against — `spock.mock.MockingApi` declares it, `SpecInternals.SpyStaticImpl` implements
 it, and Spock's own `Identifiers` lists it next to `Mock`, `Stub` and `Spy` — but no specification in
 this repository calls it, so the rule has never fired on real code here. That is why it carries
-priority 3 where the other ten carry 2.
+priority 3 where the other twelve carry 2.
 
 ### The interaction rules overlap on purpose
 

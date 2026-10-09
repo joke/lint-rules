@@ -20,6 +20,7 @@ ruleset {
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidSetupAndGivenLabelsRule)
     rule(io.github.joke.lint.codenarc.rules.spock.DeclareMockWithExplicitTypeRule)
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidMockInitializerClosureRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.AvoidSharedOrStaticMockRule)
 
 //    Interactions in a feature method
     rule(io.github.joke.lint.codenarc.rules.spock.InteractionsBelongInThenBlockRule)
@@ -31,6 +32,7 @@ ruleset {
 //    Spies
     rule(io.github.joke.lint.codenarc.rules.spock.RequireSpyEntryInteractionRule)
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidSpyStaticInLabelledBlockRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.RequireSpyInteractionResponseRule)
 
 //    Redundant annotations
     rule(io.github.joke.lint.codenarc.rules.spock.AvoidUnrollAnnotationRule)

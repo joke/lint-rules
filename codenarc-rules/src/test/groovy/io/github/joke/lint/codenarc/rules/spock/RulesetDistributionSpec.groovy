@@ -33,6 +33,7 @@ class RulesetDistributionSpec extends Specification {
                 'AvoidSetupAndGivenLabels',
                 'DeclareMockWithExplicitType',
                 'AvoidMockInitializerClosure',
+                'AvoidSharedOrStaticMock',
                 'InteractionsBelongInThenBlock',
                 'RequireValidatedInteractionArguments',
                 'UseVerifyAllForMultipleProperties',
@@ -40,13 +41,14 @@ class RulesetDistributionSpec extends Specification {
                 'ValueAssertionsBelongInExpectBlock',
                 'RequireSpyEntryInteraction',
                 'AvoidSpyStaticInLabelledBlock',
+                'RequireSpyInteractionResponse',
                 'AvoidUnrollAnnotation',
         ]
     }
 
     def 'the strict ruleset resolves from the classpath'() {
         expect:
-        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 123
+        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 125
     }
 
     def 'the strict ruleset carries the stock composition'() {

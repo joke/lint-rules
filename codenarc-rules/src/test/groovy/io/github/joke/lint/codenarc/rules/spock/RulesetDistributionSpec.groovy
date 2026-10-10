@@ -39,6 +39,7 @@ class RulesetDistributionSpec extends Specification {
                 'UseVerifyAllForMultipleProperties',
                 'RequireStrictMockingTerminator',
                 'ValueAssertionsBelongInExpectBlock',
+                'AvoidCardinalityOnStub',
                 'RequireSpyEntryInteraction',
                 'AvoidSpyStaticInLabelledBlock',
                 'RequireSpyInteractionResponse',
@@ -48,7 +49,7 @@ class RulesetDistributionSpec extends Specification {
 
     def 'the strict ruleset resolves from the classpath'() {
         expect:
-        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 125
+        RuleSetUtil.loadRuleSetFile('rulesets/groovy/joke-strict.groovy').rules.size() == 126
     }
 
     def 'the strict ruleset carries the stock composition'() {

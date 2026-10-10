@@ -75,7 +75,7 @@ public class RequireSpyEntryInteractionRule extends AbstractSpockRule {
     public static class RequireSpyEntryInteractionAstVisitor
             extends AbstractSpockBlockVisitor<RequireSpyEntryInteractionRule> {
 
-        private final SpyScope spies = new SpyScope();
+        private final DoubleScope spies = new DoubleScope(MockCall::isSpy);
 
         /**
          * Entered for every method so that the spy fields are those of the current class and the
@@ -167,7 +167,7 @@ public class RequireSpyEntryInteractionRule extends AbstractSpockRule {
         /** The spy an interaction names, or nothing when the statement names no spy in scope. */
         @VisibleForTesting
         Optional<String> spyNamedBy(final Statement statement) {
-            return targetOf(statement).flatMap(spies::spyNamedBy);
+            return targetOf(statement).flatMap(spies::doubleNamedBy);
         }
 
         @VisibleForTesting

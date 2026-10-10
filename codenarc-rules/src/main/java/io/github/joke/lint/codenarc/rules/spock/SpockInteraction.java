@@ -60,12 +60,20 @@ public final class SpockInteraction {
     @Nullable
     private final Expression cardinality;
 
+    /**
+     * The cardinality read under a {@code >>} or {@code >>>}, which {@link #cardinality} is not.
+     * Null unless the expression is a cardinality form, with or without a response.
+     */
+    @Nullable
+    private final Expression requiredCount;
+
     /** Null when the expression is not an interaction at all, which is what {@link #isPresent} reads. */
     @Nullable
     private final Expression target;
 
     public SpockInteraction(final Expression expression) {
         this.cardinality = cardinalityOf(expression);
+        this.requiredCount = countOf(expression);
         this.target = targetOf(expression);
     }
 
@@ -93,6 +101,16 @@ public final class SpockInteraction {
      */
     public boolean isCounted() {
         return cardinality != null;
+    }
+
+    /**
+     * Whether Spock treats the interaction as required: it has a cardinality and that cardinality is
+     * not {@code _}, so {@code 1 *}, {@code 0 *} and {@code (0..2) *} are required and {@code _ *} is
+     * not. A response does not change it — {@code 1 * mock.foo() >> value} is required — which is
+     * where this differs from {@link #isCounted}, that reads a stubbed interaction as having none.
+     */
+    public boolean isRequired() {
+        return requiredCount != null && !isWildcard(requiredCount);
     }
 
     /** A literal {@code 0 *}: the call is asserted never to happen, whatever it targets. */
@@ -141,6 +159,18 @@ public final class SpockInteraction {
     @Nullable
     Expression cardinalityOf(final Expression expression) {
         return isCardinality(expression) ? ((BinaryExpression) expression).getLeftExpression() : null;
+    }
+
+    /**
+     * The same read as {@link #cardinalityOf}, but looking under a response: the left side of a
+     * {@code >>} or {@code >>>} is itself the cardinality form.
+     */
+    @VisibleForTesting
+    @Nullable
+    Expression countOf(final Expression expression) {
+        return isStubbedReturn(expression)
+                ? cardinalityOf(((BinaryExpression) expression).getLeftExpression())
+                : cardinalityOf(expression);
     }
 
     @VisibleForTesting

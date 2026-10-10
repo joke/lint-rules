@@ -650,7 +650,7 @@ ruleset {
 
 ### Coverage of the Spock conventions
 
-Thirteen rules against a checklist of fourteen. Each row names the convention and the rule that enforces
+Fourteen rules against a checklist of fifteen. Each row names the convention and the rule that enforces
 it; the last row is the one left to review, and the reason it is left there.
 
 | convention | rule |
@@ -666,6 +666,7 @@ it; the last row is the one left to review, and the reason it is left there.
 | Value assertions in `expect:`, not `then:` | `ValueAssertionsBelongInExpectBlock` |
 | A spy's siblings are followed by `1 * subject._` | `RequireSpyEntryInteraction` |
 | A spy interaction states its response — `>>`, or `>> { callRealMethod() }` | `RequireSpyInteractionResponse` |
+| No cardinality on a stub — a stub is stubbed, a double that is counted is a `Mock` | `AvoidCardinalityOnStub` |
 | `SpyStatic` is a setup statement, not a labelled one | `AvoidSpyStaticInLabelledBlock` |
 | No `@Unroll` — Spock 2 unrolls by default | `AvoidUnrollAnnotation` |
 | One feature method per method under test, protected ones included | **not enforced** |
@@ -1089,6 +1090,48 @@ A spy is recognised from its declaration, as `RequireSpyEntryInteraction` does i
 default and a `Stub` an empty value, so neither is in scope, and a spy from a helper method, base class
 or parameter is invisible. Interactions inside an `interaction { }` closure are not visited.
 
+### AvoidCardinalityOnStub
+
+Reports an interaction on a stub that carries a cardinality other than `_`.
+
+```groovy
+1 * repository.find(id)                  // violation
+1 * repository.find(id) >> customer      // violation: the response does not remove the count
+0 * repository.find(id)                  // violation: Spock treats it as required too
+(1..3) * repository.find(id)             // violation
+repository.find(id) >> customer          // no violation
+_ * repository.find(id) >> customer      // no violation: not a required interaction
+0 * _                                    // no violation: names no stub
+```
+
+A stub is not verified, and Spock refuses a required interaction on one with `InvalidSpecException:
+Stub '…' matches the following required interaction`. An interaction is required unless its
+cardinality is unbounded, so the only cardinality a stub accepts is `_ *`. The rule moves a failure the
+specification would have at run time to analysis time, and to the line that causes it. A double whose
+calls are counted is a `Mock`.
+
+The forms above were established against Spock 2.4 rather than inferred:
+
+| written, against a default `Stub()` | Spock |
+|---|---|
+| `1 * s.foo()`, `(1..3) * s.foo()`, `(0..2) * s.foo()`, `0 * s.foo()` | throws |
+| `1 * s.foo() >> x` | throws |
+| `_ * s.foo()`, `s.foo() >> x` | passes |
+| `0 * _` beside a stub | passes |
+| `Stub(verified: true)`, `1 * s.foo()` | passes |
+
+**A stub declared with a `verified` argument is not reported.** `Stub(verified: true)` is allowed a
+required interaction. The value is not read, because it may be an expression CodeNarc cannot resolve,
+so any `Stub` call that passes `verified` is left alone.
+
+A stub is recognised from its declaration, as the spy rules recognise a spy: a `Stub(...)` call
+initialising a local in the feature method or a field on the specification. A stub arriving from a
+helper method, a base class or a parameter is invisible and the rule stays silent. A `Mock` and a
+`Spy` are verified and accept a cardinality, so neither is in scope. **`GroovyStub` is not
+recognised**: the factory set this artifact reads does not include it, and teaching it to would change
+`DeclareMockWithExplicitType` and `AvoidSharedOrStaticMock` in the same stroke. Interactions inside an
+`interaction { }` closure are not visited.
+
 ### AvoidSpyStaticInLabelledBlock
 
 Reports a call to `SpyStatic` under any Spock statement label.
@@ -1122,7 +1165,7 @@ from matching elsewhere. A name that merely ends in `SpyStatic` is not matched.
 artifact builds against — `spock.mock.MockingApi` declares it, `SpecInternals.SpyStaticImpl` implements
 it, and Spock's own `Identifiers` lists it next to `Mock`, `Stub` and `Spy` — but no specification in
 this repository calls it, so the rule has never fired on real code here. That is why it carries
-priority 3 where the other twelve carry 2.
+priority 3 where the other thirteen carry 2.
 
 ### The interaction rules overlap on purpose
 

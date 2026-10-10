@@ -28,6 +28,7 @@ ruleset {
     rule(io.github.joke.lint.codenarc.rules.spock.UseVerifyAllForMultiplePropertiesRule)
     rule(io.github.joke.lint.codenarc.rules.spock.RequireStrictMockingTerminatorRule)
     rule(io.github.joke.lint.codenarc.rules.spock.ValueAssertionsBelongInExpectBlockRule)
+    rule(io.github.joke.lint.codenarc.rules.spock.AvoidCardinalityOnStubRule)
 
 //    Spies
     rule(io.github.joke.lint.codenarc.rules.spock.RequireSpyEntryInteractionRule)

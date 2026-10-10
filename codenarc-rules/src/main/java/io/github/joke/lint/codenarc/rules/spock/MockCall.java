@@ -17,6 +17,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 final class MockCall {
 
     private static final String SPY = "Spy";
+    private static final String STUB = "Stub";
+    private static final String VERIFIED = "verified";
     private static final String CLASS_PROPERTY = "class";
 
     private final MethodCallExpression call;
@@ -28,6 +30,28 @@ final class MockCall {
     @VisibleForTesting
     boolean isSpy() {
         return SPY.equals(call.getMethodAsString());
+    }
+
+    /**
+     * A {@code Stub} call that does not pass {@code verified} as a named argument. Spock lets {@code
+     * Stub(verified: true)} take a required interaction, so it is not the restricted double a stub
+     * otherwise is; the value is not read, because it may be an expression CodeNarc cannot resolve.
+     */
+    @VisibleForTesting
+    boolean isUnverifiedStub() {
+        return STUB.equals(call.getMethodAsString()) && !hasNamedArgument(VERIFIED);
+    }
+
+    /**
+     * Named arguments are collected into a single map, so this reads the keys of that one map.
+     */
+    @VisibleForTesting
+    boolean hasNamedArgument(final String name) {
+        return ((TupleExpression) call.getArguments())
+                .getExpressions().stream()
+                        .filter(MapExpression.class::isInstance)
+                        .flatMap(map -> ((MapExpression) map).getMapEntryExpressions().stream())
+                        .anyMatch(entry -> name.equals(entry.getKeyExpression().getText()));
     }
 
     /**

@@ -53,7 +53,7 @@ public class RequireSpyInteractionResponseRule extends AbstractSpockRule {
     public static class RequireSpyInteractionResponseAstVisitor
             extends AbstractSpockBlockVisitor<RequireSpyInteractionResponseRule> {
 
-        private final SpyScope spies = new SpyScope();
+        private final DoubleScope spies = new DoubleScope(MockCall::isSpy);
 
         @Override
         public void visitMethodEx(final MethodNode node) {
@@ -76,7 +76,7 @@ public class RequireSpyInteractionResponseRule extends AbstractSpockRule {
             interactionOf(statement)
                     .filter(this::isUnanswered)
                     .flatMap(SpockInteraction::getTarget)
-                    .flatMap(spies::spyNamedBy)
+                    .flatMap(spies::doubleNamedBy)
                     .ifPresent(spy -> addViolation(statement, messageFor(spy)));
         }
 

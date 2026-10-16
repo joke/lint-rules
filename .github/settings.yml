@@ -34,6 +34,3 @@ branches:
     required_linear_history: true
     required_conversation_resolution: true
     restrictions:
-      apps: []
-      users: []
-      teams: []

@@ -191,6 +191,22 @@ class SpockInteractionSpec extends Specification {
         new SpockInteraction(foo()).isInteractionCall(interactionBlock())
         !new SpockInteraction(foo()).isInteractionCall(foo())
         !new SpockInteraction(foo()).isInteractionCall(call('interaction', constant(1)))
+        !new SpockInteraction(foo()).isInteractionCall(closureCall('other'))
+    }
+
+    def 'stubbedTargetOf reads the target under a cardinality, and is the expression itself without one'() {
+        expect:
+        new SpockInteraction(foo()).stubbedTargetOf(bin('*', count(1), target)).is(target)
+        new SpockInteraction(foo()).stubbedTargetOf(target).is(target)
+
+        where:
+        target << [foo(), new PropertyExpression(var('mock'), 'name')]
+    }
+
+    def 'stubbedTargetOf is empty for an expression that is not a target, with or without a cardinality'() {
+        expect:
+        new SpockInteraction(foo()).stubbedTargetOf(constant(1)) == null
+        new SpockInteraction(foo()).stubbedTargetOf(bin('*', count(1), constant(1))) == null
     }
 
     private static BinaryExpression bin(String op, Expression left, Expression right) {
@@ -230,7 +246,11 @@ class SpockInteractionSpec extends Specification {
     }
 
     private static MethodCallExpression interactionBlock() {
+        closureCall('interaction')
+    }
+
+    private static MethodCallExpression closureCall(String name) {
         def closure = new ClosureExpression(null, new BlockStatement())
-        new MethodCallExpression(var('this'), 'interaction', closure)
+        new MethodCallExpression(var('this'), name, closure)
     }
 }

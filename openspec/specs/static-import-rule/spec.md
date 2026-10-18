@@ -227,17 +227,28 @@ include it.
 - **THEN** it declares a `class`, a `message`, a `<description>`, a `<priority>` and an `<example>`
 - **AND** the description states that the threshold is a floor and that imports are never forbidden
 
-### Requirement: The rule is covered by unit tests and mutation testing
-The rule SHALL be tested by a Spock specification that runs it through PMD against fixture files
-covering every reported and every non-reported case above, and SHALL meet the project's 100%
-mutation, coverage and test strength thresholds.
+### Requirement: The rule is covered by isolated unit tests and a smoke fixture
+The rule SHALL be tested by a unit specification that isolates the rule class and covers every
+reported and every non-reported case above, meeting the project's 100% mutation, coverage and test
+strength thresholds on that specification alone. An integration specification SHALL also run the rule
+through PMD against at least one violating fixture file.
 
-The rule class SHALL itself comply with every rule this artifact publishes.
-
-#### Scenario: Every specified case has a fixture
-- **WHEN** the rule's test data is inspected
+#### Scenario: Every specified case has a unit case
+- **WHEN** the rule's unit specification is inspected
 - **THEN** it contains a case for each reported and each non-reported scenario in this spec
 
-#### Scenario: Mutation thresholds are met
+#### Scenario: Mutation thresholds are met by the unit specification
 - **WHEN** `./gradlew pitest` runs
 - **THEN** the rule class meets 100% mutation coverage, line coverage and test strength
+- **AND** no specification tagged `integration` contributes to that result
+
+#### Scenario: The rule fires through PMD
+- **WHEN** the rule's integration specification runs
+- **THEN** PMD reports a violation for the violating fixture
+
+### Requirement: The rule class complies with this artifact's own rules
+The rule class SHALL itself comply with every rule this artifact publishes.
+
+#### Scenario: The rule class is analysed by the published rules
+- **WHEN** `./gradlew check` runs
+- **THEN** `pmdMain` reports no violation against the rule class

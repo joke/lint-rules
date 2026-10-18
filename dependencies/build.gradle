@@ -17,7 +17,7 @@ dependencies {
         api 'net.sourceforge.pmd:pmd-core:7.0.0'
         api 'net.sourceforge.pmd:pmd-java:7.0.0'
         api 'net.sourceforge.pmd:pmd-test:7.0.0'
-        api 'org.apache.groovy:groovy:5.0.8'
+        api 'org.apache.groovy:groovy:6.0.0'
         api 'net.bytebuddy:byte-buddy:1.18.3'
         api 'org.assertj:assertj-core:3.27.7'
         api 'org.codenarc:CodeNarc:4.0.0'

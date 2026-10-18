@@ -23,8 +23,10 @@ dependencies {
     compileOnly 'org.projectlombok:lombok'
 
     testImplementation platform(project(':dependencies'))
+    testImplementation 'net.bytebuddy:byte-buddy'
     testImplementation 'org.apache.groovy:groovy'
     testImplementation 'org.codenarc:CodeNarc'
+    testImplementation 'org.mockito:mockito-core'
     testImplementation 'org.spockframework:spock-core'
 
     testRuntimeOnly platform(project(':dependencies'))

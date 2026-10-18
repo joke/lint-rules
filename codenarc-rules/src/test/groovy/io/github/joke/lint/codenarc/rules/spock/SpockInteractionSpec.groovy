@@ -76,6 +76,11 @@ class SpockInteractionSpec extends Specification {
         interaction.neverCalled
     }
 
+    def 'a non-zero count on the wildcard is not the terminator'() {
+        expect:
+        !new SpockInteraction(bin('*', count(1), wildcard())).terminator
+    }
+
     def 'a zero count on a named target is never called but is not the terminator'() {
         when:
         def interaction = new SpockInteraction(bin('*', count(0), foo()))

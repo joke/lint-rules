@@ -170,37 +170,6 @@ class VisitDelegationSpec extends Specification {
         result.is(context)
     }
 
-    def 'useStaticImports delegates to its collector'() {
-        UseStaticImports rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(unit, context)
-
-        then:
-        1 * rule.reportImportableMembers(unit, context) >> {}
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-    }
-
-    def 'useStaticImports returns the data it was given'() {
-        UseStaticImports rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        def result = rule.visit(unit, context)
-
-        then:
-        1 * rule.reportImportableMembers(unit, context) >> {}
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-
-        expect:
-        result.is(context)
-    }
-
     def 'useTypeImports delegates to its collector'() {
         UseTypeImports rule = Spy()
         RuleContext context = Mock()

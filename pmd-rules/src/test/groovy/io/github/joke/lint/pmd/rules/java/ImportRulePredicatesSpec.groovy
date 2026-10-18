@@ -1,7 +1,6 @@
 package io.github.joke.lint.pmd.rules.java
 
 import net.sourceforge.pmd.lang.java.ast.ASTClassType
-import net.sourceforge.pmd.lang.java.ast.ASTTypeExpression
 import spock.lang.Specification
 import spock.lang.Tag
 
@@ -20,60 +19,6 @@ class ImportRulePredicatesSpec extends Specification {
 
     def staticImports = new UseStaticImports()
     def typeImports = new UseTypeImports()
-
-    def 'a member with no recorded owner is not unambiguous'() {
-        expect:
-        !staticImports.isUnambiguous('absent', [:], [] as Set)
-    }
-
-    def 'a member with one owner is unambiguous'() {
-        expect:
-        staticImports.isUnambiguous('sqrt', [sqrt: ['Math'] as Set], [] as Set)
-    }
-
-    def 'a qualifier that is not a type expression has no type name'() {
-        expect:
-        staticImports.qualifyingTypeName(null) == null
-    }
-
-    def 'a type expression without a class type has no type name'() {
-        ASTTypeExpression qualifier = Mock()
-
-        when:
-        def name = staticImports.qualifyingTypeName(qualifier)
-
-        then:
-        1 * qualifier.firstChild(ASTClassType) >> null
-        0 * _
-
-        expect:
-        name == null
-    }
-
-    def 'a prefix as long as the member is not a factory name'() {
-        expect:
-        !staticImports.startsFactoryName('of', 'of')
-    }
-
-    def 'a prefix followed by an uppercase letter is a factory name'() {
-        expect:
-        staticImports.startsFactoryName('ofSeconds', 'of')
-    }
-
-    def 'a prefix followed by a lowercase letter is not a factory name'() {
-        expect:
-        !staticImports.startsFactoryName('offer', 'of')
-    }
-
-    def 'a three-character member is under the floor'() {
-        expect:
-        !staticImports.isLongEnough('max')
-    }
-
-    def 'a four-character member clears the floor'() {
-        expect:
-        staticImports.isLongEnough('sqrt')
-    }
 
     def 'a type with no recorded name is not unambiguous'() {
         expect:

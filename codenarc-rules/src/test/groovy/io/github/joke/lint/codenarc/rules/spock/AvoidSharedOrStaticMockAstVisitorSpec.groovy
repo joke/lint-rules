@@ -21,18 +21,21 @@ class AvoidSharedOrStaticMockAstVisitorSpec extends Specification {
 
     AvoidSharedOrStaticMockRule.AvoidSharedOrStaticMockAstVisitor visitor = Spy()
 
-    def 'visitField reports a shared field initialised by a mock factory'() {
-        FieldNode field = field(Modifier.STATIC, call('Mock'))
+    def 'visitField reports a shared field initialised by a mock factory, including DeepMock'() {
+        FieldNode field = field(Modifier.STATIC, call(factory))
 
         when:
         visitor.visitField(field)
 
         then:
         1 * visitor.isShared(field) >> true
-        1 * visitor.addViolation(field,
+        (factory == 'SpyStatic' ? 0 : 1) * visitor.addViolation(field,
                 'Create the double inside the feature method: a shared or static one lives outside the scope Spock verifies its interactions in.') >> {}
         1 * visitor._
         0 * _
+
+        where:
+        factory << ['Mock', 'DeepMock', 'SpyStatic']
     }
 
     def 'visitField reports nothing for a field that is not shared, or is not initialised by a mock factory'() {

@@ -55,7 +55,7 @@ class AvoidMockInitializerClosureAstVisitorSpec extends Specification {
         true       | true    | false   | _
     }
 
-    def 'isMockFactory accepts exactly Mock, Stub and Spy'() {
+    def 'isMockFactory accepts Mock, Stub, Spy and DeepMock, and nothing else'() {
         expect:
         visitor.isMockFactory(call(name)) == expected
 
@@ -64,7 +64,7 @@ class AvoidMockInitializerClosureAstVisitorSpec extends Specification {
         'Mock'      | true
         'Stub'      | true
         'Spy'       | true
-        'DeepMock'  | false
+        'DeepMock'  | true
         'SpyStatic' | false
     }
 

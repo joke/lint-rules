@@ -2,7 +2,6 @@ package io.github.joke.lint.codenarc.rules.spock;
 
 import static org.codenarc.rule.junit.SpockUtil.getClosureArgument;
 
-import java.util.Set;
 import org.codehaus.groovy.ast.expr.MethodCallExpression;
 import org.codenarc.rule.AbstractAstVisitor;
 import org.codenarc.rule.AstVisitor;
@@ -42,7 +41,7 @@ public class AvoidMockInitializerClosureRule extends AbstractSpockRule {
     public static class AvoidMockInitializerClosureAstVisitor
             extends AbstractAstVisitor<AvoidMockInitializerClosureRule> {
 
-        private static final Set<String> MOCK_FACTORIES = Set.of("Mock", "Stub", "Spy");
+        private final MockFactories factories = new MockFactories();
 
         private static final String MESSAGE =
                 "Declare the interaction in 'then:' with its cardinality and its real argument, not in the mock's initialiser.";
@@ -66,16 +65,12 @@ public class AvoidMockInitializerClosureRule extends AbstractSpockRule {
         }
 
         /**
-         * Matched by name only, for the reason {@link DeclareMockWithExplicitTypeRule} gives: the
-         * call arrives as an implicit-{@code this} invocation, resolving it would need a compile
-         * classpath, and the class gate is what keeps the bare name from matching elsewhere.
-         *
-         * <p>Compared through the set rather than {@code contains}, because {@code getMethodAsString}
-         * is null for a dynamically-named call and {@link Set#of} throws on a null lookup.
+         * The factory names are {@link MockFactories}' own, so a {@code DeepMock} initialiser is reported like
+         * a {@code Mock} one.
          */
         @VisibleForTesting
         boolean isMockFactory(final MethodCallExpression call) {
-            return MOCK_FACTORIES.stream().anyMatch(factory -> factory.equals(call.getMethodAsString()));
+            return factories.isFactory(call);
         }
 
         @VisibleForTesting

@@ -18,5 +18,6 @@ class AvoidMockInitializerClosureRuleIntegrationSpec extends Specification {
         fixture                                  | lines
         'ClosureInMockInitializerIsReported' | [4]
         'MockWithoutClosureIsNotReported'    | []
+        'DeepMockClosureIsReported'  | [4]
     }
 }

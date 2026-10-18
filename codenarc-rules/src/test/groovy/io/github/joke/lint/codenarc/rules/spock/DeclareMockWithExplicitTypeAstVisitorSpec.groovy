@@ -145,6 +145,8 @@ class DeclareMockWithExplicitTypeAstVisitorSpec extends Specification {
         where:
         initialiser                 | factory
         call('Mock')                | true
+        call('DeepMock')            | true
+        call('SpyStatic')           | false
         new ConstantExpression(1)   | false
     }
 

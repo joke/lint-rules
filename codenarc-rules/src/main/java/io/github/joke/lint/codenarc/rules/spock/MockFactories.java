@@ -8,8 +8,9 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Recognises a call to {@code Mock}, {@code Stub} or {@code Spy}. The rules that declare, scope or
- * count doubles share this rather than each restating which names are factories.
+ * Recognises a call to {@code Mock}, {@code Stub}, {@code Spy} or {@code DeepMock}. The rules that declare,
+ * scope or count doubles share this rather than each restating which names are factories. {@code DeepMock}
+ * is a mock, so it is held to the same declaration, sharing and initialiser rules as {@code Mock}.
  *
  * <p>Matched by name only. The call arrives as an implicit-{@code this} invocation on the
  * specification, but nothing here depends on the receiver: resolving {@code Mock} to Spock's {@code
@@ -20,7 +21,7 @@ import org.jspecify.annotations.Nullable;
  */
 final class MockFactories {
 
-    private static final Set<String> FACTORIES = Set.of("Mock", "Stub", "Spy");
+    private static final Set<String> FACTORIES = Set.of("Mock", "Stub", "Spy", "DeepMock");
 
     /** Nothing unless the expression is a call to one of the three factories. */
     @VisibleForTesting

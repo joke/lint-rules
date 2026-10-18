@@ -19,5 +19,6 @@ class DeclareMockWithExplicitTypeRuleIntegrationSpec extends Specification {
         'DynamicMockIsReported'  | [5]
         'RepeatedTypeIsReported' | [5]
         'TypedMockIsNotReported' | []
+        'DeepMockRepeatingTypeIsReported'| [5]
     }
 }

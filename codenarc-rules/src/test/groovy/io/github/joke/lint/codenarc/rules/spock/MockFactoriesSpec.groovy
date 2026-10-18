@@ -36,7 +36,7 @@ class MockFactoriesSpec extends Specification {
         factories.read(call('SpyStatic')).empty
     }
 
-    def 'isFactory accepts exactly Mock, Stub and Spy'() {
+    def 'isFactory accepts Mock, Stub, Spy and DeepMock, and nothing else'() {
         expect:
         factories.isFactory(call(name)) == expected
 
@@ -45,7 +45,7 @@ class MockFactoriesSpec extends Specification {
         'Mock'         | true
         'Stub'         | true
         'Spy'          | true
-        'DeepMock'     | false
+        'DeepMock'     | true
         'SpyStatic'    | false
         'MockRepository' | false
         'GroovyMock'   | false

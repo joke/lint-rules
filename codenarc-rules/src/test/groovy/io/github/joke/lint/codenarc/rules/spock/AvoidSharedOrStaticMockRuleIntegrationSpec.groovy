@@ -19,5 +19,6 @@ class AvoidSharedOrStaticMockRuleIntegrationSpec extends Specification {
         'SharedMockIsReported'      | [6]
         'StaticMockIsReported'      | [4]
         'InstanceMockIsNotReported' | []
+        'SharedDeepMockIsReported'| [6]
     }
 }

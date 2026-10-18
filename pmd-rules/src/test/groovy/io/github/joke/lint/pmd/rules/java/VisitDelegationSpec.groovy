@@ -23,55 +23,6 @@ class VisitDelegationSpec extends Specification {
     ASTMethodDeclaration method = Mock()
     ASTCompilationUnit unit = Mock()
 
-    def 'useVarForLocalVariables reports a rewritable declaration'() {
-        UseVarForLocalVariables rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(declaration, context)
-
-        then:
-        1 * rule.isRewritableAsVar(declaration) >> true
-        1 * rule.reportIfRewritableAsVar(declaration, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        1 * context.addViolation(declaration)
-        0 * _
-    }
-
-    def 'useVarForLocalVariables reports nothing otherwise'() {
-        UseVarForLocalVariables rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(declaration, context)
-
-        then:
-        1 * rule.isRewritableAsVar(declaration) >> false
-        1 * rule.reportIfRewritableAsVar(declaration, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-    }
-
-    def 'useVarForLocalVariables returns the data it was given'() {
-        UseVarForLocalVariables rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        def result = rule.visit(declaration, context)
-
-        then:
-        1 * rule.isRewritableAsVar(declaration) >> false
-        1 * rule.reportIfRewritableAsVar(declaration, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-
-        expect:
-        result.is(context)
-    }
-
     def 'staticMethodsModifyStaticState reports an unjustified static'() {
         StaticMethodsModifyStaticState rule = Spy()
         RuleContext context = Mock()

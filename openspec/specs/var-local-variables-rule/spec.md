@@ -114,9 +114,9 @@ reader to use `var`, a description, a priority, and both a violating and a compl
   `<example>`
 
 ### Requirement: The rule is covered by unit tests and mutation testing
-The rule SHALL be unit-tested with JUnit 5 using `pmd-test`, with a fixture covering every reported
-and every non-reported case above, and SHALL meet the project's 100% mutation, coverage and test
-strength thresholds.
+The rule SHALL be tested by a Spock specification that runs it through PMD against fixture files
+covering every reported and every non-reported case above, and SHALL meet the project's 100%
+mutation, coverage and test strength thresholds.
 
 #### Scenario: Every specified case has a fixture
 - **WHEN** the rule's test data is inspected

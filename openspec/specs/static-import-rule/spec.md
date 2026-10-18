@@ -228,9 +228,9 @@ include it.
 - **AND** the description states that the threshold is a floor and that imports are never forbidden
 
 ### Requirement: The rule is covered by unit tests and mutation testing
-The rule SHALL be unit-tested with JUnit 5 using `pmd-test`, with a fixture covering every reported
-and every non-reported case above, and SHALL meet the project's 100% mutation, coverage and test
-strength thresholds.
+The rule SHALL be tested by a Spock specification that runs it through PMD against fixture files
+covering every reported and every non-reported case above, and SHALL meet the project's 100%
+mutation, coverage and test strength thresholds.
 
 The rule class SHALL itself comply with every rule this artifact publishes.
 

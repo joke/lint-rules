@@ -47,7 +47,7 @@
 ## 7. Integration checks
 
 - [x] 7.1 Run `./gradlew check` from the repository root; verify it passes with no CodeNarc, PMD, Error Prone, NullAway, Spotless or Pitest violations. NEVER continue if there are violations.
-- [ ] 7.2 Commit the completed change with /commit-commands:commit.
+- [x] 7.2 Commit the completed change with /commit-commands:commit.
 
 ## Workflow follow-up
 

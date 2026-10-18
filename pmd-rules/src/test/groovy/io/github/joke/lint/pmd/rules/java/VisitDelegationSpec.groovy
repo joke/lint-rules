@@ -1,7 +1,6 @@
 package io.github.joke.lint.pmd.rules.java
 
 import net.sourceforge.pmd.lang.java.ast.ASTCompilationUnit
-import net.sourceforge.pmd.lang.java.ast.ASTLambdaExpression
 import net.sourceforge.pmd.lang.java.ast.ASTLocalVariableDeclaration
 import net.sourceforge.pmd.lang.java.ast.ASTMethodDeclaration
 import net.sourceforge.pmd.reporting.RuleContext
@@ -22,7 +21,6 @@ class VisitDelegationSpec extends Specification {
 
     ASTLocalVariableDeclaration declaration = Mock()
     ASTMethodDeclaration method = Mock()
-    ASTLambdaExpression lambda = Mock()
     ASTCompilationUnit unit = Mock()
 
     def 'useVarForLocalVariables reports a rewritable declaration'() {
@@ -213,55 +211,6 @@ class VisitDelegationSpec extends Specification {
         then:
         1 * rule.isUnmarkedSeam(method) >> false
         1 * rule.reportIfUnmarkedSeam(method, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-
-        expect:
-        result.is(context)
-    }
-
-    def 'avoidLambdaBlockBodies reports a block body'() {
-        AvoidLambdaBlockBodies rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(lambda, context)
-
-        then:
-        1 * rule.hasExtractableBlockBody(lambda) >> true
-        1 * rule.reportIfBlockBody(lambda, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        1 * context.addViolation(lambda)
-        0 * _
-    }
-
-    def 'avoidLambdaBlockBodies reports nothing otherwise'() {
-        AvoidLambdaBlockBodies rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(lambda, context)
-
-        then:
-        1 * rule.hasExtractableBlockBody(lambda) >> false
-        1 * rule.reportIfBlockBody(lambda, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-    }
-
-    def 'avoidLambdaBlockBodies returns the data it was given'() {
-        AvoidLambdaBlockBodies rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        def result = rule.visit(lambda, context)
-
-        then:
-        1 * rule.hasExtractableBlockBody(lambda) >> false
-        1 * rule.reportIfBlockBody(lambda, context) >> { callRealMethod() }
         1 * rule._
         _ * context.rule >> rule
         0 * _

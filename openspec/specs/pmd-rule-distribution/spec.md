@@ -5,7 +5,7 @@
 How the PMD rules are packaged and consumed: rule classes implemented in Java under
 `io.github.joke.lint.pmd.rules.java`, PMD as a compile-only dependency at the supported floor, a
 dependency-free published POM, the `category` / `rulesets` resource split, the two support windows
-the shipped resources carry, the JUnit and XML-fixture test model, and the documented consumer
+the shipped resources carry, the Spock and `.java`-fixture test model, and the documented consumer
 wiring.
 
 ## Requirements

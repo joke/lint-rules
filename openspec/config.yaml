@@ -22,9 +22,11 @@ context: |
   together because CodeNarc parses .groovy source with its own embedded Groovy.
   Both published POMs declare no dependencies: the consumer supplies the tool via Gradle's pmd or
   codenarc configuration at a version they choose.
-  Testing: pmd-rules uses JUnit 5 with net.sourceforge.pmd:pmd-test, AssertJ, Mockito and XML
-  fixtures. codenarc-rules uses Spock; every specification carries @spock.lang.Tag('unit') or
-  ('integration') because the test/integrationTest split and Pitest's includedGroups select on it.
+  Testing: pmd-rules and codenarc-rules both use Spock; every specification carries
+  @spock.lang.Tag('unit') or ('integration') because the test/integrationTest split and Pitest's
+  includedGroups select on it. pmd-rules runs rules through PMD's stable API (PmdRuleRunner) against
+  .java fixtures under src/test/resources, outside every Java source set. Mockito and byte-buddy back
+  Spock's mocking of final PMD classes.
   Pitest at 100/100/100 for both modules.
   Dogfooding: pmd-rules analyses both modules' Java; codenarc-rules analyses its own Spock
   specifications with its own published ruleset.

@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'groovy'
     id 'maven-publish'
     id 'conventions'
 }
@@ -31,6 +32,7 @@ dependencies {
     annotationProcessor 'io.github.joke.jspecify:processor'
     annotationProcessor 'org.projectlombok:lombok'
 
+    codenarc project(':codenarc-rules')
     pmd project(':pmd-rules')
 
     compileOnly platform(project(':dependencies'))
@@ -43,15 +45,15 @@ dependencies {
     testImplementation platform(project(':dependencies'))
     testImplementation 'net.sourceforge.pmd:pmd-core'
     testImplementation 'net.sourceforge.pmd:pmd-java'
-    testImplementation 'net.sourceforge.pmd:pmd-test'
-    testImplementation 'org.assertj:assertj-core'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api'
+    testImplementation 'io.github.joke:spock-deepmock'
+    testImplementation 'net.bytebuddy:byte-buddy'
+    testImplementation 'org.apache.groovy:groovy'
     testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.spockframework:spock-core'
 
     testCompileOnly 'org.jetbrains:annotations'
 
     testRuntimeOnly platform(project(':dependencies'))
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testRuntimeOnly 'org.ow2.asm:asm'
 }

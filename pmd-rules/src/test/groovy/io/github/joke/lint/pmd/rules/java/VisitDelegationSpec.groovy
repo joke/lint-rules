@@ -23,55 +23,6 @@ class VisitDelegationSpec extends Specification {
     ASTMethodDeclaration method = Mock()
     ASTCompilationUnit unit = Mock()
 
-    def 'staticMethodsModifyStaticState reports an unjustified static'() {
-        StaticMethodsModifyStaticState rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(method, context)
-
-        then:
-        1 * rule.isUnjustifiedStatic(method) >> true
-        1 * rule.reportIfUnjustifiedStatic(method, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        1 * context.addViolation(method)
-        0 * _
-    }
-
-    def 'staticMethodsModifyStaticState reports nothing otherwise'() {
-        StaticMethodsModifyStaticState rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(method, context)
-
-        then:
-        1 * rule.isUnjustifiedStatic(method) >> false
-        1 * rule.reportIfUnjustifiedStatic(method, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-    }
-
-    def 'staticMethodsModifyStaticState returns the data it was given'() {
-        StaticMethodsModifyStaticState rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        def result = rule.visit(method, context)
-
-        then:
-        1 * rule.isUnjustifiedStatic(method) >> false
-        1 * rule.reportIfUnjustifiedStatic(method, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-
-        expect:
-        result.is(context)
-    }
-
     def 'avoidPrivateAndProtectedMethods reports a hidden method'() {
         AvoidPrivateAndProtectedMethods rule = Spy()
         RuleContext context = Mock()

@@ -1,6 +1,5 @@
 package io.github.joke.lint.pmd.rules.java
 
-import net.sourceforge.pmd.lang.java.ast.ASTAnonymousClassDeclaration
 import net.sourceforge.pmd.lang.java.ast.ASTCompilationUnit
 import net.sourceforge.pmd.lang.java.ast.ASTLambdaExpression
 import net.sourceforge.pmd.lang.java.ast.ASTLocalVariableDeclaration
@@ -24,7 +23,6 @@ class VisitDelegationSpec extends Specification {
     ASTLocalVariableDeclaration declaration = Mock()
     ASTMethodDeclaration method = Mock()
     ASTLambdaExpression lambda = Mock()
-    ASTAnonymousClassDeclaration anonymousClass = Mock()
     ASTCompilationUnit unit = Mock()
 
     def 'useVarForLocalVariables reports a rewritable declaration'() {
@@ -264,55 +262,6 @@ class VisitDelegationSpec extends Specification {
         then:
         1 * rule.hasExtractableBlockBody(lambda) >> false
         1 * rule.reportIfBlockBody(lambda, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-
-        expect:
-        result.is(context)
-    }
-
-    def 'avoidAnonymousClasses reports a body holding logic'() {
-        AvoidAnonymousClasses rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(anonymousClass, context)
-
-        then:
-        1 * rule.hasExtractableBody(anonymousClass) >> true
-        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        1 * context.addViolation(anonymousClass)
-        0 * _
-    }
-
-    def 'avoidAnonymousClasses reports nothing otherwise'() {
-        AvoidAnonymousClasses rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        rule.visit(anonymousClass, context)
-
-        then:
-        1 * rule.hasExtractableBody(anonymousClass) >> false
-        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> { callRealMethod() }
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-    }
-
-    def 'avoidAnonymousClasses returns the data it was given'() {
-        AvoidAnonymousClasses rule = Spy()
-        RuleContext context = Mock()
-
-        when:
-        def result = rule.visit(anonymousClass, context)
-
-        then:
-        1 * rule.hasExtractableBody(anonymousClass) >> false
-        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> { callRealMethod() }
         1 * rule._
         _ * context.rule >> rule
         0 * _

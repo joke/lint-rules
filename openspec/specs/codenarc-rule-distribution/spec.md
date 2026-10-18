@@ -260,9 +260,9 @@ delegate; a bare top-level `ruleset('…')` fails at analysis time with a `Missi
 The `codenarc-rules` module SHALL test its rules with Spock specifications under
 `codenarc-rules/src/test/groovy`, driving CodeNarc's `AbstractRuleTestCase` where it is useful.
 
-There is no XML fixture harness for CodeNarc, so the PMD module's requirement that test data stay in
-XML has no counterpart here: violating and compliant samples are embedded in the specification as
-Groovy strings.
+Violating and compliant samples are embedded in the specification as Groovy strings, because a
+CodeNarc sample is a short snippet fed to the rule, not a file the build would otherwise compile or
+analyse.
 
 Every specification SHALL carry a `@spock.lang.Tag`, either `unit` or `integration`, because the
 `test` / `integrationTest` split selects on it and an untagged specification runs in neither task.

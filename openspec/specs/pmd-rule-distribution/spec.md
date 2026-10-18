@@ -60,8 +60,9 @@ SHALL NOT impose one transitively.
 
 This SHALL be secured by configuration choice rather than by a verification task. Every dependency
 the `pmd-rules` module declares SHALL sit on a configuration that structurally cannot reach the POM —
-`compileOnly`, `annotationProcessor`, `testImplementation`, `testCompileOnly` or `testRuntimeOnly`.
-No `implementation`, `api` or `runtimeOnly` declaration SHALL be added to the `pmd-rules` module.
+`compileOnly`, `annotationProcessor`, `pmd`, `codenarc`, `testImplementation`, `testCompileOnly` or
+`testRuntimeOnly`. No `implementation`, `api` or `runtimeOnly` declaration SHALL be added to the
+`pmd-rules` module.
 
 The previous `verifyPomHasNoDependencies` task, which parsed the generated POM and failed `check` on
 any declared dependency, SHALL NOT be reinstated. The property it defended is stated here; a
@@ -74,12 +75,12 @@ any declared dependency, SHALL NOT be reinstated. The property it defended is st
 
 #### Scenario: Every declaration is on a non-publishing configuration
 - **WHEN** the `dependencies` block of `pmd-rules/build.gradle` is inspected
-- **THEN** every declaration is `compileOnly`, `annotationProcessor`, `pmd`, `testImplementation`,
-  `testCompileOnly` or `testRuntimeOnly`
+- **THEN** every declaration is `compileOnly`, `annotationProcessor`, `pmd`, `codenarc`,
+  `testImplementation`, `testCompileOnly` or `testRuntimeOnly`
 - **AND** none is `implementation`, `api` or `runtimeOnly`
 
 #### Scenario: Test and processor dependencies do not reach the POM
-- **WHEN** `pmd-test` is declared `testImplementation` and Lombok `annotationProcessor`
+- **WHEN** Spock is declared `testImplementation` and Lombok `annotationProcessor`
 - **THEN** the published POM still declares no dependency
 
 #### Scenario: No verification task guards this
@@ -164,8 +165,8 @@ classpath reference, exactly as a consuming Gradle build does, rather than by fi
 Classpath resolution from the `pmd` configuration is the single mechanism the distribution model
 depends on, so it SHALL be exercised on every build rather than discovered by the first consumer.
 
-The two resources SHALL be exercised by separate integration-test classes, so that a failure names
-which resource broke. The split SHALL NOT be made by a JUnit assumption on the running PMD version,
+The two resources SHALL be exercised by separate integration specifications, so that a failure names
+which resource broke. The split SHALL NOT be made by a skip or assumption on the running PMD version,
 because an assumption that stops holding produces a skipped test that a build log does not
 distinguish from a test that never ran.
 
@@ -174,7 +175,7 @@ PMD-version failure with a harness-version failure. They SHALL drive `PMDConfigu
 `RuleSetLoader`, `PmdAnalysis` and `RuleViolation` directly.
 
 #### Scenario: Loading mirrors consumer wiring
-- **WHEN** an integration test loads a ruleset
+- **WHEN** an integration specification loads a ruleset
 - **THEN** it uses a classpath reference such as `rulesets/java/joke.xml` and not an absolute or
   project-relative file path
 
@@ -185,7 +186,7 @@ PMD-version failure with a harness-version failure. They SHALL drive `PMDConfigu
 #### Scenario: Each resource has its own test class
 - **WHEN** the integration tests are inspected
 - **THEN** `rulesets/java/joke.xml` and `rulesets/java/joke-strict.xml` are exercised by separate
-  classes
+  specifications
 - **AND** neither skips itself based on the running PMD version
 
 #### Scenario: The tests use the stable API subset only
@@ -300,38 +301,59 @@ The wiring SHALL name the artifact at its current coordinates, `io.github.joke.l
 - **WHEN** `README.md` is inspected
 - **THEN** it names the lowest supported PMD version
 
-### Requirement: Rule test fixtures stay in XML
-The deliberate rule violations that make up a rule's test data SHALL live inside the `pmd-test` XML
-descriptors under `pmd-rules/src/test/resources`, and SHALL NOT be moved into `.java` files.
+### Requirement: Rule test fixtures are Java files outside the Java source sets
+The deliberate rule violations and compliant samples that make up a rule's test data SHALL be real
+`.java` files under `pmd-rules/src/test/resources`, one sample per file, and SHALL NOT sit in a Java
+or Groovy source set. Resources are on no analysis path, so the build neither compiles nor flags
+them and no path needs to be excluded.
 
-Some PMD projects keep rule test data in real source files under a `testdata` package. Doing that
-here would make the build flag its own fixtures, because the module that builds the rules also
-analyses its own source with them. The obvious repair — excluding the fixture path from PMD — would
-quietly exclude anything else that later moved into that path, so the constraint is stated rather
-than left to be rediscovered.
+#### Scenario: Fixtures are invisible to the build's analysis
+- **WHEN** `compileTestJava`, `compileTestGroovy`, `pmdMain` and `pmdTest` run over this repository
+- **THEN** no violation or diagnostic is reported against rule test data
 
-#### Scenario: Fixtures are invisible to PMD
-- **WHEN** `pmdMain` and `pmdTest` run over this repository
-- **THEN** no violation is reported against rule test data
-
-#### Scenario: Test data lives in the descriptors
+#### Scenario: Test data lives in fixture files
 - **WHEN** a rule's test data is inspected
-- **THEN** every violating and compliant sample is embedded in a `pmd-test` XML descriptor
-- **AND** no `.java` file exists whose purpose is to carry a deliberate violation
+- **THEN** every violating and compliant sample is a `.java` file under `src/test/resources`
+- **AND** no `.java` file in a source set exists whose purpose is to carry a deliberate violation
 
-### Requirement: The PMD rules are tested with JUnit, not Spock
-The `pmd-rules` module SHALL NOT apply the `groovy` plugin and SHALL NOT declare Spock. Its tests
-SHALL remain JUnit 5 tests in Java, driving `pmd-test`'s `RuleTst` against the XML descriptors.
+#### Scenario: A fixture is read as a real file
+- **WHEN** a fixture file is opened
+- **THEN** it contains plain Java source with no XML or CDATA wrapper
 
-Spock is readmitted to this repository only in `codenarc-rules`, where it is the corpus the CodeNarc
-rules analyse. Bringing it here would forfeit the `pmd-test` harness, which is the mechanism the XML
-fixture requirement depends on, and would buy no dogfooding: PMD does not analyse Groovy.
+### Requirement: Rule fixtures run at a chosen Java language version
+A rule specification SHALL be able to run a fixture at a stated Java language version, so that a case
+which depends on the language level, such as `var` at Java 8 or 10, is expressed in the specification.
 
-#### Scenario: The PMD module stays on JUnit
+The helper that runs a rule through PMD SHALL use only the API subset stable across PMD 7, so that
+`integrationTest` and the unit specifications resolve at the 7.0.0 floor.
+
+#### Scenario: A language-level case pins its version
+- **WHEN** a specification checks `UseVarForLocalVariables` against a fixture at Java 8
+- **THEN** it names that version in its `where:` row and the rule reports no violation
+
+#### Scenario: The helper works at the floor
+- **WHEN** the rule specifications run with PMD at the 7.0.0 floor
+- **THEN** the helper runs without referencing an API added after 7.0.0
+
+### Requirement: The PMD rules are tested with Spock
+The `pmd-rules` module SHALL apply the `groovy` plugin and declare Spock on test configurations. Its
+tests SHALL be Spock specifications that run each rule through PMD against the fixture files.
+
+Because the module applies the `groovy` plugin, the convention plugin's CodeNarc task SHALL run for
+`:pmd-rules`, analysing its specifications with the ruleset published by `codenarc-rules`. This
+SHALL NOT create a task cycle with `codenarc-rules`' own use of the `pmd-rules` jar.
+
+#### Scenario: The PMD module is a Spock module
 - **WHEN** `pmd-rules/build.gradle` is inspected
-- **THEN** it does not apply the `groovy` plugin
-- **AND** it declares no Spock dependency
+- **THEN** it applies the `groovy` plugin
+- **AND** it declares Spock on test configurations only
 
-#### Scenario: No CodeNarc task exists for the PMD module
+#### Scenario: CodeNarc analyses the PMD module's specifications
 - **WHEN** `./gradlew check` runs
-- **THEN** no `CodeNarc` task executes for `:pmd-rules`
+- **THEN** a `CodeNarc` task executes for `:pmd-rules`
+- **AND** it uses the ruleset published by `codenarc-rules`
+
+#### Scenario: The two modules build together without a cycle
+- **WHEN** `./gradlew check` runs from the repository root
+- **THEN** the build completes without a circular task dependency between `:pmd-rules` and
+  `:codenarc-rules`

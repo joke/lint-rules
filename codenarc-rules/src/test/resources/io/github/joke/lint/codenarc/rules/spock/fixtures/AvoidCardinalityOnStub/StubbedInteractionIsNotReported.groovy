@@ -1,0 +1,12 @@
+import spock.lang.Specification
+
+class ExampleSpec extends Specification {
+    def 'a feature'() {
+        given:
+        Repository repository = Stub()
+        when:
+        service.run()
+        then:
+        repository.find(id) >> customer
+    }
+}

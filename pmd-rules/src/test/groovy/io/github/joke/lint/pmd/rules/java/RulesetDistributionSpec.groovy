@@ -4,6 +4,7 @@ import net.sourceforge.pmd.PMDConfiguration
 import net.sourceforge.pmd.PmdAnalysis
 import net.sourceforge.pmd.reporting.Report
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 import java.nio.file.Files
@@ -19,6 +20,7 @@ import java.nio.file.Path
  * thing this specification exists to detect. The build runs this class once per supported PMD version.
  */
 @Tag('integration')
+@Subject(PmdAnalysis)
 class RulesetDistributionSpec extends Specification {
 
     static final String RULESET = 'rulesets/java/joke.xml'

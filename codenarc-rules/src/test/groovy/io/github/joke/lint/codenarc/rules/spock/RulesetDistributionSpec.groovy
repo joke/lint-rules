@@ -3,6 +3,7 @@ package io.github.joke.lint.codenarc.rules.spock
 import org.codenarc.ruleregistry.RuleRegistryInitializer
 import org.codenarc.ruleset.RuleSetUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -15,6 +16,7 @@ import spock.lang.Tag
  * confound a distribution failure with a harness failure.
  */
 @Tag('integration')
+@Subject(RuleSetUtil)
 class RulesetDistributionSpec extends Specification {
 
     /**

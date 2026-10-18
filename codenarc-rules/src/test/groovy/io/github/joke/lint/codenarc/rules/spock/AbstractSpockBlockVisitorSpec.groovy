@@ -10,6 +10,7 @@ import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codenarc.rule.junit.SpockUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -17,6 +18,7 @@ import spock.lang.Tag
  * observed through a visitor that records each block it is given, so no rule is involved.
  */
 @Tag('unit')
+@Subject(AbstractSpockBlockVisitor)
 class AbstractSpockBlockVisitorSpec extends Specification {
 
     Recording visitor = new Recording()

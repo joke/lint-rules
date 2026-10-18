@@ -4,6 +4,7 @@ import net.sourceforge.pmd.lang.java.ast.ASTBlock
 import net.sourceforge.pmd.lang.java.ast.ASTLambdaExpression
 import net.sourceforge.pmd.reporting.RuleContext
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -12,6 +13,7 @@ import spock.lang.Tag
  * decision.
  */
 @Tag('unit')
+@Subject(AvoidLambdaBlockBodies)
 class AvoidLambdaBlockBodiesSpec extends Specification {
 
     ASTLambdaExpression lambda = Mock()

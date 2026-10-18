@@ -6,6 +6,7 @@ import net.sourceforge.pmd.lang.java.ast.ASTMethodDeclaration
 import net.sourceforge.pmd.lang.java.ast.ModifierOwner.Visibility
 import net.sourceforge.pmd.reporting.RuleContext
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 import java.util.function.Predicate
@@ -16,6 +17,7 @@ import java.util.function.Predicate
  * decision.
  */
 @Tag('unit')
+@Subject(UseVisibleForTestingAnnotation)
 class UseVisibleForTestingAnnotationSpec extends Specification {
 
     ASTMethodDeclaration method = Mock()

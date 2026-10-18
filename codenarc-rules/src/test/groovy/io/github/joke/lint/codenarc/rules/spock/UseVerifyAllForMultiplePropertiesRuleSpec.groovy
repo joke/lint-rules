@@ -1,6 +1,7 @@
 package io.github.joke.lint.codenarc.rules.spock
 
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -8,6 +9,7 @@ import spock.lang.Tag
  * names. The reporting decisions are in {@link UseVerifyAllForMultiplePropertiesAstVisitorSpec}.
  */
 @Tag('unit')
+@Subject(UseVerifyAllForMultiplePropertiesRule)
 class UseVerifyAllForMultiplePropertiesRuleSpec extends Specification {
 
     UseVerifyAllForMultiplePropertiesRule rule = new UseVerifyAllForMultiplePropertiesRule()

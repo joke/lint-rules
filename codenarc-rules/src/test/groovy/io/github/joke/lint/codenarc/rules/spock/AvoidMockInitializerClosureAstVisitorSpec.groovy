@@ -8,6 +8,7 @@ import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codenarc.rule.junit.SpockUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -16,6 +17,7 @@ import spock.lang.Tag
  * {@code SpyStatic}.
  */
 @Tag('unit')
+@Subject(AvoidMockInitializerClosureRule.AvoidMockInitializerClosureAstVisitor)
 class AvoidMockInitializerClosureAstVisitorSpec extends Specification {
 
     AvoidMockInitializerClosureRule.AvoidMockInitializerClosureAstVisitor visitor = Spy()

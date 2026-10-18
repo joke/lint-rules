@@ -14,6 +14,7 @@ import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.syntax.Token
 import org.codenarc.rule.junit.SpockUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -23,6 +24,7 @@ import spock.lang.Tag
  * {@code SpyStatic}.
  */
 @Tag('unit')
+@Subject(UseVerifyAllForMultiplePropertiesRule.UseVerifyAllForMultiplePropertiesAstVisitor)
 class UseVerifyAllForMultiplePropertiesAstVisitorSpec extends Specification {
 
     UseVerifyAllForMultiplePropertiesRule.UseVerifyAllForMultiplePropertiesAstVisitor visitor = Spy()

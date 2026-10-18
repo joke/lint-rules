@@ -20,6 +20,7 @@ import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.syntax.Token
 import org.codehaus.groovy.syntax.Types
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -28,6 +29,7 @@ import spock.lang.Tag
  * scope is the visitor's own, populated through its collection method on real declarations.
  */
 @Tag('unit')
+@Subject(AvoidCardinalityOnStubRule.AvoidCardinalityOnStubAstVisitor)
 class AvoidCardinalityOnStubAstVisitorSpec extends Specification {
 
     static final String STUB_MESSAGE =

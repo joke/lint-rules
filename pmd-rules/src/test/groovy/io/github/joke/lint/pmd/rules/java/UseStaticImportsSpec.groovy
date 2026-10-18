@@ -12,6 +12,7 @@ import net.sourceforge.pmd.lang.java.ast.ASTVariableId
 import net.sourceforge.pmd.lang.java.ast.JavaNode
 import net.sourceforge.pmd.reporting.RuleContext
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -19,6 +20,7 @@ import spock.lang.Tag
  * test is the spy's real method; the siblings it calls are stubbed, so each feature sees one decision.
  */
 @Tag('unit')
+@Subject(UseStaticImports)
 class UseStaticImportsSpec extends Specification {
 
     ASTCompilationUnit unit = Mock()

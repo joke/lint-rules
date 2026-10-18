@@ -1,6 +1,7 @@
 package io.github.joke.lint.codenarc.rules.spock
 
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -8,6 +9,7 @@ import spock.lang.Tag
  * {@link RequireValidatedInteractionArgumentsAstVisitorSpec}.
  */
 @Tag('integration')
+@Subject(RequireValidatedInteractionArgumentsRule)
 class RequireValidatedInteractionArgumentsRuleIntegrationSpec extends Specification {
 
     def 'the rule reports the expected lines for each case'() {

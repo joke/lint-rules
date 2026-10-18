@@ -21,6 +21,7 @@ import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.syntax.Token
 import org.codehaus.groovy.syntax.Types
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -29,6 +30,7 @@ import spock.lang.Tag
  * recording subclass is given that scope through its visitBlock, so the decision runs for real.
  */
 @Tag('unit')
+@Subject(RequireSpyEntryInteractionRule.RequireSpyEntryInteractionAstVisitor)
 class RequireSpyEntryInteractionAstVisitorSpec extends Specification {
 
     static final String ENTRY_MISPLACED =

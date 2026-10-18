@@ -8,6 +8,7 @@ import org.codehaus.groovy.ast.stmt.EmptyStatement
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.stmt.Statement
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -15,6 +16,7 @@ import spock.lang.Tag
  * directly. The visitor is spied so the method under test runs for real while the siblings it calls are stubbed.
  */
 @Tag('unit')
+@Subject(AvoidSpyStaticInLabelledBlockRule.AvoidSpyStaticInLabelledBlockAstVisitor)
 class AvoidSpyStaticInLabelledBlockAstVisitorSpec extends Specification {
 
     AvoidSpyStaticInLabelledBlockRule.AvoidSpyStaticInLabelledBlockAstVisitor visitor = Spy()

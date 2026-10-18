@@ -16,6 +16,7 @@ import org.codehaus.groovy.ast.stmt.ReturnStatement
 import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.syntax.Token
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -24,6 +25,7 @@ import spock.lang.Tag
  * are stubbed. The pure decisions run on the real visitor over built nodes.
  */
 @Tag('unit')
+@Subject(RequireValidatedInteractionArgumentsRule.RequireValidatedInteractionArgumentsAstVisitor)
 class RequireValidatedInteractionArgumentsAstVisitorSpec extends Specification {
 
     RequireValidatedInteractionArgumentsRule.RequireValidatedInteractionArgumentsAstVisitor visitor = Spy()

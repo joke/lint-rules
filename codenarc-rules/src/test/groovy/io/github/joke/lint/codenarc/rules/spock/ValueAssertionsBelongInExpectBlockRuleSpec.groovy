@@ -1,6 +1,7 @@
 package io.github.joke.lint.codenarc.rules.spock
 
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -8,6 +9,7 @@ import spock.lang.Tag
  * names. The reporting decisions are in {@link ValueAssertionsBelongInExpectBlockAstVisitorSpec}.
  */
 @Tag('unit')
+@Subject(ValueAssertionsBelongInExpectBlockRule)
 class ValueAssertionsBelongInExpectBlockRuleSpec extends Specification {
 
     ValueAssertionsBelongInExpectBlockRule rule = new ValueAssertionsBelongInExpectBlockRule()

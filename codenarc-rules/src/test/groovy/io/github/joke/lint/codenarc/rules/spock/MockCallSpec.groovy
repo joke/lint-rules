@@ -10,6 +10,7 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.PropertyExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -17,6 +18,7 @@ import spock.lang.Tag
  * arguments collected into a single map placed first, as the Groovy parser leaves them.
  */
 @Tag('unit')
+@Subject(MockCall)
 class MockCallSpec extends Specification {
 
     def 'isSpy is true only for a call to Spy'() {

@@ -5,6 +5,7 @@ import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.stmt.Statement
 import org.codenarc.rule.junit.SpockUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -13,6 +14,7 @@ import spock.lang.Tag
  * stubbed; the value-assertion test is {@code SpockUtil}'s, which is stubbed with {@code SpyStatic}.
  */
 @Tag('unit')
+@Subject(ValueAssertionsBelongInExpectBlockRule.ValueAssertionsBelongInExpectBlockAstVisitor)
 class ValueAssertionsBelongInExpectBlockAstVisitorSpec extends Specification {
 
     ValueAssertionsBelongInExpectBlockRule.ValueAssertionsBelongInExpectBlockAstVisitor visitor = Spy()

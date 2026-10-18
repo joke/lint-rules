@@ -3,6 +3,7 @@ package io.github.joke.lint.pmd.rules.java
 import net.sourceforge.pmd.PMDConfiguration
 import net.sourceforge.pmd.PmdAnalysis
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -18,6 +19,7 @@ import spock.lang.Tag
  * Deliberately does not use {@code pmd-test}, for the reason given on {@link RulesetDistributionSpec}.
  */
 @Tag('integration')
+@Subject(PmdAnalysis)
 class StrictRulesetDistributionSpec extends Specification {
 
     static final String STRICT = 'rulesets/java/joke-strict.xml'

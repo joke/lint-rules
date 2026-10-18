@@ -12,6 +12,7 @@ import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.syntax.Token
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -19,6 +20,7 @@ import spock.lang.Tag
  * nodes in the shape the Groovy parser gives it, so a form is recognised or rejected on its structure.
  */
 @Tag('unit')
+@Subject(SpockInteraction)
 class SpockInteractionSpec extends Specification {
 
     def 'a counted interaction is required unless its count is the wildcard'() {

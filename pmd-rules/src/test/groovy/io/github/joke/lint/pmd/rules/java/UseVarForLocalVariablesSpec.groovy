@@ -12,6 +12,7 @@ import net.sourceforge.pmd.lang.java.ast.ASTNullLiteral
 import net.sourceforge.pmd.lang.java.ast.ASTVariableDeclarator
 import net.sourceforge.pmd.reporting.RuleContext
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -20,6 +21,7 @@ import spock.lang.Tag
  * decision.
  */
 @Tag('unit')
+@Subject(UseVarForLocalVariables)
 class UseVarForLocalVariablesSpec extends Specification {
 
     ASTLocalVariableDeclaration declaration = Mock()

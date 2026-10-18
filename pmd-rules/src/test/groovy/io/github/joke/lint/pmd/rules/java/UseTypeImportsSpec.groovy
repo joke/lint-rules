@@ -10,6 +10,7 @@ import net.sourceforge.pmd.reporting.RuleContext
 
 import java.util.function.Predicate
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 import static net.sourceforge.pmd.lang.document.Chars.wrap
@@ -19,6 +20,7 @@ import static net.sourceforge.pmd.lang.document.Chars.wrap
  * test is the spy's real method; the siblings it calls are stubbed, so each feature sees one decision.
  */
 @Tag('unit')
+@Subject(UseTypeImports)
 class UseTypeImportsSpec extends Specification {
 
     ASTCompilationUnit unit = Mock()

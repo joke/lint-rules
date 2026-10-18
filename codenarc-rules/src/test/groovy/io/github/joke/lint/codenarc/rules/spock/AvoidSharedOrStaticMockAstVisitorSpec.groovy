@@ -8,6 +8,7 @@ import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 import java.lang.reflect.Modifier
@@ -17,6 +18,7 @@ import java.lang.reflect.Modifier
  * fields are built as nodes, so the modifier and annotation tests read the real node.
  */
 @Tag('unit')
+@Subject(AvoidSharedOrStaticMockRule.AvoidSharedOrStaticMockAstVisitor)
 class AvoidSharedOrStaticMockAstVisitorSpec extends Specification {
 
     AvoidSharedOrStaticMockRule.AvoidSharedOrStaticMockAstVisitor visitor = Spy()

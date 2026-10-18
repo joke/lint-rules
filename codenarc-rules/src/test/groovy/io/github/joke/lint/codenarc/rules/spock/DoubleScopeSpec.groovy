@@ -14,6 +14,7 @@ import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.syntax.Token
 import org.codehaus.groovy.syntax.Types
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -22,6 +23,7 @@ import spock.lang.Tag
  * declaration is built as nodes.
  */
 @Tag('unit')
+@Subject(DoubleScope)
 class DoubleScopeSpec extends Specification {
 
     def 'enter collects the fields initialised by a factory of the kind'() {

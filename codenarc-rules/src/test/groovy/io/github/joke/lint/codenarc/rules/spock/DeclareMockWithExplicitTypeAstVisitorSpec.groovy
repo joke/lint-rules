@@ -12,6 +12,7 @@ import org.codehaus.groovy.ast.expr.VariableExpression
 import org.codehaus.groovy.syntax.Token
 import org.codehaus.groovy.syntax.Types
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -20,6 +21,7 @@ import spock.lang.Tag
  * factory call is built as nodes, and {@link MockCall} reads the real node.
  */
 @Tag('unit')
+@Subject(DeclareMockWithExplicitTypeRule.DeclareMockWithExplicitTypeAstVisitor)
 class DeclareMockWithExplicitTypeAstVisitorSpec extends Specification {
 
     static final String DYNAMIC_MESSAGE =

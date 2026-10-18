@@ -9,6 +9,7 @@ import org.codehaus.groovy.ast.stmt.ExpressionStatement
 import org.codehaus.groovy.ast.stmt.Statement
 import org.codenarc.rule.junit.SpockUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -16,6 +17,7 @@ import spock.lang.Tag
  * The visitor is spied so the method under test runs for real while the siblings it calls are stubbed.
  */
 @Tag('unit')
+@Subject(AvoidSetupAndGivenLabelsRule.AvoidSetupAndGivenLabelsAstVisitor)
 class AvoidSetupAndGivenLabelsAstVisitorSpec extends Specification {
 
     AvoidSetupAndGivenLabelsRule.AvoidSetupAndGivenLabelsAstVisitor visitor = Spy()

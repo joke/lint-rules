@@ -3,6 +3,7 @@ package io.github.joke.lint.codenarc.rules.spock
 import org.codehaus.groovy.ast.ClassNode
 import org.codenarc.rule.junit.SpockUtil
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -10,6 +11,7 @@ import spock.lang.Tag
  * is exercised through a concrete rule, the smallest one, since the base class is abstract.
  */
 @Tag('unit')
+@Subject(AbstractSpockRule)
 class AbstractSpockRuleSpec extends Specification {
 
     AvoidUnrollAnnotationRule rule = new AvoidUnrollAnnotationRule()

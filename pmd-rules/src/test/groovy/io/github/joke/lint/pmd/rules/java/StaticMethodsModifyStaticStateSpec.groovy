@@ -15,6 +15,7 @@ import net.sourceforge.pmd.lang.java.symbols.JFieldSymbol
 import net.sourceforge.pmd.lang.java.symbols.JVariableSymbol
 import net.sourceforge.pmd.reporting.RuleContext
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 import java.lang.reflect.Modifier
@@ -26,6 +27,7 @@ import java.util.function.Predicate
  * decision.
  */
 @Tag('unit')
+@Subject(StaticMethodsModifyStaticState)
 class StaticMethodsModifyStaticStateSpec extends Specification {
 
     ASTMethodDeclaration method = Mock()

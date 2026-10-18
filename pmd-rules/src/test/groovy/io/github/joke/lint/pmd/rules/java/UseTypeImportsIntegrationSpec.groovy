@@ -1,6 +1,7 @@
 package io.github.joke.lint.pmd.rules.java
 
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 import static io.github.joke.lint.pmd.rules.java.PmdRuleRunner.violationLines
@@ -10,6 +11,7 @@ import static io.github.joke.lint.pmd.rules.java.PmdRuleRunner.violationLines
  * depends on. The decisions are in {@link UseTypeImportsSpec}.
  */
 @Tag('integration')
+@Subject(UseTypeImports)
 class UseTypeImportsIntegrationSpec extends Specification {
 
     def 'the rule reports the expected lines for each case'() {

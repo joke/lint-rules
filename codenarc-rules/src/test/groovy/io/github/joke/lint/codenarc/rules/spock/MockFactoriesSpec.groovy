@@ -5,6 +5,7 @@ import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.expr.VariableExpression
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -12,6 +13,7 @@ import spock.lang.Tag
  * only thing under test.
  */
 @Tag('unit')
+@Subject(MockFactories)
 class MockFactoriesSpec extends Specification {
 
     MockFactories factories = new MockFactories()

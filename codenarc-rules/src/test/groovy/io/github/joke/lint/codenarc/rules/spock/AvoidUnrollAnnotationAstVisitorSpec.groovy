@@ -5,6 +5,7 @@ import org.codehaus.groovy.ast.AnnotationNode
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.MethodNode
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -12,6 +13,7 @@ import spock.lang.Tag
  * visitor is spied so that the method under test runs for real while the siblings it calls are stubbed.
  */
 @Tag('unit')
+@Subject(AvoidUnrollAnnotationRule.AvoidUnrollAnnotationAstVisitor)
 class AvoidUnrollAnnotationAstVisitorSpec extends Specification {
 
     AvoidUnrollAnnotationRule.AvoidUnrollAnnotationAstVisitor visitor = Spy()

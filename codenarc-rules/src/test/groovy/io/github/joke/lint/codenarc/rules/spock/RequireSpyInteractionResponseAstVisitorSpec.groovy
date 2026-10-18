@@ -21,6 +21,7 @@ import org.codehaus.groovy.ast.stmt.Statement
 import org.codehaus.groovy.syntax.Token
 import org.codehaus.groovy.syntax.Types
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -29,6 +30,7 @@ import spock.lang.Tag
  * judgement together, a recording subclass captures the violations it is given.
  */
 @Tag('unit')
+@Subject(RequireSpyInteractionResponseRule.RequireSpyInteractionResponseAstVisitor)
 class RequireSpyInteractionResponseAstVisitorSpec extends Specification {
 
     static final String SPY_MESSAGE =

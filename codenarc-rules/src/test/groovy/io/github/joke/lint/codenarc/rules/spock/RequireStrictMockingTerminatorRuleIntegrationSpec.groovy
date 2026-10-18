@@ -1,6 +1,7 @@
 package io.github.joke.lint.codenarc.rules.spock
 
 import spock.lang.Specification
+import spock.lang.Subject
 import spock.lang.Tag
 
 /**
@@ -8,6 +9,7 @@ import spock.lang.Tag
  * {@link RequireStrictMockingTerminatorAstVisitorSpec}.
  */
 @Tag('integration')
+@Subject(RequireStrictMockingTerminatorRule)
 class RequireStrictMockingTerminatorRuleIntegrationSpec extends Specification {
 
     def 'the rule reports the expected lines for each case'() {

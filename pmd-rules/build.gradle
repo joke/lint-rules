@@ -53,6 +53,8 @@ dependencies {
 
     testCompileOnly 'org.jetbrains:annotations'
 
+    testImplementation 'io.github.joke:spock-deepmock'
+
     testRuntimeOnly platform(project(':dependencies'))
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'org.ow2.asm:asm'

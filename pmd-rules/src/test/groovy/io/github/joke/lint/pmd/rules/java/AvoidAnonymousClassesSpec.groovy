@@ -9,64 +9,32 @@ import spock.lang.Specification
 import spock.lang.Tag
 
 /**
- * Covers each method of {@link AvoidAnonymousClasses} in isolation: {@code visit} delegates to the
- * report decision, which delegates to the two predicates. Every predicate is exercised on its own, so
- * a fault in one is not masked by the others.
+ * Each {@code @VisibleForTesting} method of {@link AvoidAnonymousClasses} is tested directly. The method
+ * under test is the spy's real method; the siblings it calls are stubbed, so each feature sees one
+ * decision.
  */
 @Tag('unit')
 class AvoidAnonymousClassesSpec extends Specification {
 
     ASTAnonymousClassDeclaration anonymousClass = Mock()
-    ASTClassBody body = Mock()
     RuleContext context = Mock()
 
-    def 'visit reports a body holding logic'() {
-        AvoidAnonymousClasses rule = Spy()
-
-        when:
-        rule.visit(anonymousClass, context)
-
-        then:
-        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> { callRealMethod() }
-        1 * rule.hasExtractableBody(anonymousClass) >> true
-        1 * rule._
-        _ * context.rule >> rule
-        1 * context.addViolation(anonymousClass)
-        0 * _
-    }
-
-    def 'visit reports nothing otherwise'() {
-        AvoidAnonymousClasses rule = Spy()
-
-        when:
-        rule.visit(anonymousClass, context)
-
-        then:
-        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> { callRealMethod() }
-        1 * rule.hasExtractableBody(anonymousClass) >> false
-        1 * rule._
-        _ * context.rule >> rule
-        0 * _
-    }
-
-    def 'visit returns the data it was given'() {
+    def 'visit delegates to the report decision and returns the data it was given'() {
         AvoidAnonymousClasses rule = Spy()
 
         when:
         def result = rule.visit(anonymousClass, context)
 
         then:
-        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> { callRealMethod() }
-        1 * rule.hasExtractableBody(anonymousClass) >> false
+        1 * rule.reportIfBodyHoldsLogic(anonymousClass, context) >> {}
         1 * rule._
-        _ * context.rule >> rule
         0 * _
 
         expect:
         result.is(context)
     }
 
-    def 'reportIfBodyHoldsLogic adds a violation for a body holding logic'() {
+    def 'reportIfBodyHoldsLogic adds a violation when the body holds logic'() {
         AvoidAnonymousClasses rule = Spy()
 
         when:
@@ -109,6 +77,7 @@ class AvoidAnonymousClassesSpec extends Specification {
 
     def 'hasExtractableBody is false for an empty body'() {
         AvoidAnonymousClasses rule = Spy()
+        ASTClassBody body = Mock()
 
         when:
         def result = rule.hasExtractableBody(anonymousClass)
@@ -126,6 +95,7 @@ class AvoidAnonymousClassesSpec extends Specification {
 
     def 'hasExtractableBody is true for a non-empty body that is not an enum constant'() {
         AvoidAnonymousClasses rule = Spy()
+        ASTClassBody body = Mock()
 
         when:
         def result = rule.hasExtractableBody(anonymousClass)

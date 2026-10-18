@@ -1316,13 +1316,13 @@ since `pmdMain` resolves that ruleset.
 `buildSrc/src/main/groovy/conventions.gradle` and run `./gradlew check`. There is no version list to
 extend and no guard to satisfy.
 
-### Rule test data stays in XML
+### Rule test data lives in `.java` files outside the source sets
 
-The `pmd-test` descriptors under `pmd-rules/src/test/resources` deliberately contain violating code, and
-the examples in `category/java/joke.xml` do too. Both are invisible to `pmdMain` and `pmdTest` only
-because they are XML. Do not move rule fixtures into `.java` files — the build would flag its own
-test data, and excluding the fixture path to fix it would silently exclude whatever moved there
-next.
+Each deliberate violation under `pmd-rules/src/test/resources/.../fixtures/<Rule>/` is a real `.java`
+file. Because it sits under `src/test/resources` rather than `src/test/java`, it is not compiled with
+`-Werror`, Error Prone or NullAway, and no PMD or CodeNarc run analyses it. Do not move rule fixtures
+into `src/test/java`: the build would flag its own test data. Excluding the fixture path from analysis
+to fix that would silently exclude whatever moved there next.
 
 ## License
 

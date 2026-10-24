@@ -115,7 +115,7 @@ pluginManager.withPlugin('pmd') {
         rulesMinimumPriority = 5
         ruleSets = ['rulesets/java/joke-strict.xml']
         dependencies {
-            pmd 'net.sourceforge.pmd:pmd-dist:7.26.0'
+            pmd 'net.sourceforge.pmd:pmd-dist:7.28.0'
         }
     }
 }
@@ -123,7 +123,7 @@ pluginManager.withPlugin('pmd') {
 pluginManager.withPlugin('net.ltgt.errorprone') {
     pluginManager.apply 'net.ltgt.nullaway'
     dependencies {
-        errorprone('com.google.errorprone:error_prone_core:2.49.0')
+        errorprone('com.google.errorprone:error_prone_core:2.51.0')
     }
     tasks.withType(JavaCompile).configureEach {
         options.errorprone {
@@ -134,7 +134,7 @@ pluginManager.withPlugin('net.ltgt.errorprone') {
 
 pluginManager.withPlugin('net.ltgt.nullaway') {
     dependencies {
-        errorprone('com.uber.nullaway:nullaway:0.13.4')
+        errorprone('com.uber.nullaway:nullaway:0.14.3')
     }
     tasks.withType(JavaCompile).configureEach {
         options.errorprone {

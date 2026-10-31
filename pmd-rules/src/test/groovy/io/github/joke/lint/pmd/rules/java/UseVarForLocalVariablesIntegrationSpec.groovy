@@ -23,5 +23,29 @@ class UseVarForLocalVariablesIntegrationSpec extends Specification {
         'AnExplicitlyTypedLocalVariableIsReported'          | null    | [3]
         'ATryWithResourcesDeclarationIsReported'            | null    | [3]
         'TheRuleAppliesFromJava10'                          | '10'    | [3]
+        'TheRuleAppliesFromJava10'                          | '8'     | []
+    }
+
+    def 'the targetJavaVersion property decides whether the rule reports'() {
+        expect:
+        violationLines('UseVarForLocalVariables', 'AnExplicitlyTypedLocalVariableIsReported', null,
+                [targetJavaVersion: target]) == lines
+
+        where:
+        target | lines
+        '8'    | []
+        '9'    | []
+        '10'   | [3]
+        '17'   | [3]
+    }
+
+    def 'a targetJavaVersion that is not a number is rejected by PMD'() {
+        when:
+        violationLines('UseVarForLocalVariables', 'AnExplicitlyTypedLocalVariableIsReported', null,
+                [targetJavaVersion: 'eight'])
+
+        then:
+        thrown(Exception)
+        0 * _
     }
 }

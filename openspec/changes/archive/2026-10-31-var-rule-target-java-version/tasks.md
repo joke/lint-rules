@@ -21,7 +21,7 @@
 - [x] 4.1 Check that the unit spec still meets the 100% mutation, coverage and test-strength thresholds for the rule class
 - [x] 4.2 Run a Gradle build against a small Java 8 project that uses the ruleset with `targetJavaVersion` set to `8` and confirm no `var` violations are reported
 - [x] 4.3 Run `./gradlew check` and do not continue if there are violations
-- [ ] 4.4 Commit the completed change with `/commit-commands:commit`
+- [x] 4.4 Commit the completed change with `/commit-commands:commit`
 
 ## Workflow follow-up
 

@@ -42,6 +42,17 @@ class UseVarForLocalVariablesSpec extends Specification {
         result.is(context)
     }
 
+    def 'the constructor registers the targetJavaVersion property'() {
+        when:
+        def rule = new UseVarForLocalVariables()
+
+        then:
+        0 * _
+
+        expect:
+        rule.getPropertyDescriptor('targetJavaVersion').is(UseVarForLocalVariables.TARGET_JAVA_VERSION)
+    }
+
     def 'reportIfRewritableAsVar adds a violation for a rewritable declaration'() {
         UseVarForLocalVariables rule = Spy()
 
@@ -49,6 +60,7 @@ class UseVarForLocalVariablesSpec extends Specification {
         rule.reportIfRewritableAsVar(declaration, context)
 
         then:
+        1 * rule.targetSupportsVar() >> true
         1 * rule.isRewritableAsVar(declaration) >> true
         1 * rule._
         _ * context.rule >> rule
@@ -63,9 +75,45 @@ class UseVarForLocalVariablesSpec extends Specification {
         rule.reportIfRewritableAsVar(declaration, context)
 
         then:
+        1 * rule.targetSupportsVar() >> true
         1 * rule.isRewritableAsVar(declaration) >> false
         1 * rule._
         0 * _
+    }
+
+    def 'reportIfRewritableAsVar adds no violation, without asking whether the declaration is rewritable, when the target predates var'() {
+        UseVarForLocalVariables rule = Spy()
+
+        when:
+        rule.reportIfRewritableAsVar(declaration, context)
+
+        then:
+        1 * rule.targetSupportsVar() >> false
+        1 * rule._
+        0 * _
+    }
+
+    def 'targetSupportsVar is true when the target is unset, or is a level that has var'() {
+        UseVarForLocalVariables rule = Spy()
+
+        when:
+        def result = rule.targetSupportsVar()
+
+        then:
+        1 * rule.getProperty(UseVarForLocalVariables.TARGET_JAVA_VERSION) >> target
+        1 * rule._
+        0 * _
+
+        expect:
+        result == expected
+
+        where:
+        target | expected
+        0      | true
+        9      | false
+        8      | false
+        10     | true
+        17     | true
     }
 
     def 'isRewritableAsVar is false for a declaration whose type is already inferred'() {

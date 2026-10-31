@@ -32,6 +32,11 @@ It deliberately does not report declarations that `var` cannot express: a declar
 initializer, one initialized to `null`, one using array-initializer shorthand, one initialized with
 a lambda or a method reference, and one declaring more than one variable. Fields and method,
 constructor, catch and lambda parameters are out of scope entirely.
+
+PMD analyses at its own default language version, not at the version the code compiles for. A codebase
+targeting Java 8 must therefore state its target in the ruleset: set the `targetJavaVersion` property
+to `8` on this rule, and the rule reports nothing below Java 10. Left unset, the rule applies from the
+language version PMD analyses at.
         </description>
         <priority>3</priority>
         <example>

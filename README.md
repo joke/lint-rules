@@ -210,8 +210,32 @@ int a = 1, b = 2;                           // var forbids multiple declarators
 
 Fields and method, constructor, catch and lambda parameters are out of scope entirely.
 
-The rule declares `minimumLanguageVersion="10"`, so PMD skips it for source analysed at an earlier
-language version rather than reporting violations you cannot act on.
+The rule declares `minimumLanguageVersion="10"`, which PMD applies to the language version it analyses
+at. Under Gradle, PMD 7 analyses at its own default version, not at the version your code compiles
+for, so on a Java 8 codebase state the target yourself with the `targetJavaVersion` property. Because
+the property is set on a rule, it needs a ruleset file of your own rather than the `ruleSets` shortcut:
+
+```xml
+<!-- config/pmd/joke-java8.xml -->
+<?xml version="1.0"?>
+<ruleset name="java8" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0">
+    <description>Java 8 target for the joke rules</description>
+    <rule ref="category/java/joke.xml/UseVarForLocalVariables">
+        <properties>
+            <property name="targetJavaVersion" value="8"/>
+        </properties>
+    </rule>
+</ruleset>
+```
+
+```groovy
+pmd {
+    ruleSetFiles = files('config/pmd/joke-java8.xml')
+}
+```
+
+With `targetJavaVersion` set below 10 the rule reports nothing. Left unset, it behaves as described
+above.
 
 ### StaticMethodsModifyStaticState
 

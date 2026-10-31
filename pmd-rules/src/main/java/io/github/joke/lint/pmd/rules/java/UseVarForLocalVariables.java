@@ -1,5 +1,8 @@
 package io.github.joke.lint.pmd.rules.java;
 
+import static net.sourceforge.pmd.properties.NumericConstraints.inRange;
+import static net.sourceforge.pmd.properties.PropertyFactory.intProperty;
+
 import java.util.List;
 import net.sourceforge.pmd.lang.java.ast.ASTArrayInitializer;
 import net.sourceforge.pmd.lang.java.ast.ASTExpression;
@@ -10,6 +13,7 @@ import net.sourceforge.pmd.lang.java.ast.ASTMethodReference;
 import net.sourceforge.pmd.lang.java.ast.ASTNullLiteral;
 import net.sourceforge.pmd.lang.java.ast.ASTVariableDeclarator;
 import net.sourceforge.pmd.lang.java.rule.AbstractJavaRulechainRule;
+import net.sourceforge.pmd.properties.PropertyDescriptor;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 
@@ -26,12 +30,37 @@ public class UseVarForLocalVariables extends AbstractJavaRulechainRule {
 
     private static final int ONE_DECLARATOR = 1;
 
+    /** The first Java language level that has {@code var}. */
+    private static final int VAR_SINCE = 10;
+
+    /** The property value meaning the consumer has not stated a target, so PMD's own gate alone applies. */
+    private static final int UNSET = 0;
+
     /** Initializers that carry no type of their own for {@code var} to infer. */
     private static final List<Class<? extends ASTExpression>> UNINFERABLE_INITIALIZERS = List.of(
             ASTNullLiteral.class, ASTArrayInitializer.class, ASTLambdaExpression.class, ASTMethodReference.class);
 
+    /**
+     * The Java level the consumer compiles for, stated in its ruleset. PMD 7 under Gradle analyses at its own
+     * default language version, so this is the only way the rule learns that a Java 8 codebase cannot use
+     * {@code var}.
+     */
+    @VisibleForTesting
+    static final PropertyDescriptor<Integer> TARGET_JAVA_VERSION = intProperty("targetJavaVersion")
+            .desc("Java language level of the code being analysed, for example 8. Below 10 the rule reports nothing. "
+                    + "0 leaves the decision to PMD's minimumLanguageVersion gate alone.")
+            .require(inRange(UNSET, 99))
+            .defaultValue(UNSET)
+            .build();
+
+    /**
+     * {@code definePropertyDescriptor} is PMD's registration hook for rule properties, not a method a subclass
+     * could override to change behaviour here, so calling it from the constructor is safe.
+     */
+    @SuppressWarnings("PMD.ConstructorCallsOverridableMethod")
     public UseVarForLocalVariables() {
         super(ASTLocalVariableDeclaration.class);
+        definePropertyDescriptor(TARGET_JAVA_VERSION);
     }
 
     /**
@@ -46,9 +75,16 @@ public class UseVarForLocalVariables extends AbstractJavaRulechainRule {
 
     @VisibleForTesting
     void reportIfRewritableAsVar(final ASTLocalVariableDeclaration node, final Object data) {
-        if (isRewritableAsVar(node)) {
+        if (targetSupportsVar() && isRewritableAsVar(node)) {
             asCtx(data).addViolation(node);
         }
+    }
+
+    /** True when the consumer's target is unset or is a level that has {@code var}. */
+    @VisibleForTesting
+    boolean targetSupportsVar() {
+        final var target = getProperty(TARGET_JAVA_VERSION);
+        return target == UNSET || target >= VAR_SINCE;
     }
 
     @VisibleForTesting

@@ -12,12 +12,12 @@ dependencies {
     api platform('org.junit:junit-bom:6.1.2')
 
     constraints {
-        api 'io.github.joke.jspecify:processor:1.0.0'
+        api 'io.github.joke.jspecify:processor:2.0.0'
         api 'io.github.joke:spock-deepmock:5.0.0'
         api 'net.sourceforge.pmd:pmd-core:7.0.0'
         api 'net.sourceforge.pmd:pmd-java:7.0.0'
         api 'net.sourceforge.pmd:pmd-test:7.0.0'
-        api 'org.apache.groovy:groovy:5.0.8'
+        api 'org.apache.groovy:groovy:6.0.0'
         api 'net.bytebuddy:byte-buddy:1.18.3'
         api 'org.assertj:assertj-core:3.27.7'
         api 'org.codenarc:CodeNarc:4.0.0'
